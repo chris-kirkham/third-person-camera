@@ -3836,22 +3836,23 @@ MonoBehaviour:
   maxOffset: {x: 0, y: 0, z: -1}
   interpolateTargetFollowing: 1
   followSpeed: 4
-  interpolateTargetLookAt: 0
-  targetLookAtLerpSpeed: 4
+  interpolateTargetLookAt: 1
+  targetLookAtLerpSpeed: 8
   avoidFollowTargetOcclusion: 1
-  occlusionPullInSpeed: 0
+  occlusionPullInSpeedHorizontal: 1
+  occlusionPullInSpeedVertical: 1
   occlusionIncreaseFollowSpeedMultiplier: 4
   occlusionClipPanePadding: 0
-  preserveCameraHeight: 0
-  useTimeInOcclusionMultiplier: 1
+  preserveCameraHeight: 1
+  useTimeInOcclusionMultiplier: 0
   maxTimeInOcclusionMultiplier: 4
   timeInOcclusionRampUpSpeed: 1
   timeInOcclusionRampDownSpeed: 1
-  useCamWhiskers: 0
+  useCamWhiskers: 1
   whiskerPushStrength: 1
   numWhiskers: 4
   whiskerLength: 1
-  whiskerSectorAngle: 180
+  whiskerSectorAngle: 182
   avoidCollisionWithGeometry: 1
   collisionDetectionDistance: 1
   collisionPullInSpeed: 1
@@ -3860,6 +3861,7 @@ MonoBehaviour:
   orbitSensitivity: 10
   minOrbitYAngle: -45
   maxOrbitYAngle: 45
+  usePreviousTargetPositionsForCameraPullIn: 1
 --- !u!1 &974962513
 GameObject:
   m_ObjectHideFlags: 0

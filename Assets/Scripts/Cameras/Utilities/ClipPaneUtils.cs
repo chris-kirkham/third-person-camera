@@ -46,7 +46,7 @@ public static class ClipPaneUtils
     //returns true if any hit and false if none hit. The out hits variable only returns successful hits, so it will be empty if none hit.
     public static bool LinecastsFromNearClipPane(this Camera cam, Vector3 target, out List<RaycastHit> hits, LayerMask layerMask, float clipPanePadding = 0f)
     {
-        Vector3[] points = GetNearClipPaneCornersWorld(cam, clipPanePadding);
+        Vector3[] points = cam.GetNearClipPaneCornersWorld(clipPanePadding);
 
         List<RaycastHit> hitsList = new List<RaycastHit>();
         RaycastHit hit;
@@ -108,7 +108,7 @@ public static class ClipPaneUtils
 
         float z = cam.nearClipPlane;
         float y = Mathf.Tan(cam.fieldOfView / 2 * Mathf.Deg2Rad) * z * paddingMult;
-        float x = y * cam.aspect * clipPanePadding * paddingMult;
+        float x = y * cam.aspect * paddingMult;
 
         return new Vector3(x, y, z);
     }
@@ -147,6 +147,13 @@ public static class ClipPaneUtils
     {
         Vector2 offset = cam.GetOffsetFromCentreOfView(worldPos);
         return offset.x > -xDeadzoneLeft && offset.x < xDeadzoneRight && offset.y > -yDeadzoneTop && offset.y < yDeadzoneBottom;
+    }
+
+    //Returns the distance from the centre of the camera's near clip pane to its corner
+    public static float GetNearClipPaneCentreToCornerDistance(this Camera cam, float clipPanePadding = 0)
+    {
+        Vector3 halfExtents = cam.GetNearClipPaneHalfExtents(clipPanePadding);
+        return Vector3.Distance(new Vector3(0f, 0f, halfExtents.z), halfExtents);
     }
 
 }

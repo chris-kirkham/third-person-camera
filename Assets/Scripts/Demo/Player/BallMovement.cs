@@ -22,14 +22,13 @@ public class BallMovement : MonoBehaviour
 
     void FixedUpdate()
     {
-        Vector3 moveDirection = cam.transform.TransformDirection(new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical")));
-        moveDirection.y = 0f;
-
-        bool jump = Input.GetKeyDown(KeyCode.Space);
-
+        Vector3 camForwardFlat = new Vector3(cam.transform.forward.x, 0f, cam.transform.forward.z).normalized;
+        Quaternion camLookFlat = Quaternion.LookRotation(camForwardFlat, Vector3.up);
+        Vector3 moveDirection = camLookFlat * new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
         rb.AddForce(moveDirection * moveSpeed, ForceMode.Force);
 
-        if(jump && Physics.Raycast(transform.position, Vector3.down, 2f, groundLayer))
+        bool jump = Input.GetKeyDown(KeyCode.Space);
+        if (jump && Physics.Raycast(transform.position, Vector3.down, 2f, groundLayer))
         {
             rb.AddForce(Vector3.up, ForceMode.Impulse);
         }

@@ -10,22 +10,28 @@ public class ThirdPersonCameraController : MonoBehaviour
     private Camera cam;
     public GameObject followTarget;
     public GameObject lookAtTarget;
-    
-    //Inspector parameters
+
+    /* Inspector parameters */
+    #region target follow parameters
     [Header("Target following")]
     public Vector3 desiredOffset = Vector3.back;
     public Vector3 minOffset = Vector3.back;
     public Vector3 maxOffset = Vector3.back;
     public bool interpolateTargetFollowing = true;
     public float followSpeed = 1f;
+    #endregion
 
+    #region target look parameters
     [Header("Target look")]
     public bool interpolateTargetLookAt = true;
     public float targetLookAtLerpSpeed = 1f;
+    #endregion
 
+    #region occlusion parameters
     [Header("Occlusion avoidance")]
     public bool avoidFollowTargetOcclusion = true;
-    public float occlusionPullInSpeed = 1f;
+    public float occlusionPullInSpeedHorizontal = 1f;
+    public float occlusionPullInSpeedVertical = 1f;
     public float occlusionIncreaseFollowSpeedMultiplier = 1f;
     public float occlusionClipPanePadding = 0f;
     public bool preserveCameraHeight = true;
@@ -36,19 +42,25 @@ public class ThirdPersonCameraController : MonoBehaviour
     public float maxTimeInOcclusionMultiplier = 10f;
     public float timeInOcclusionRampUpSpeed = 1f;
     public float timeInOcclusionRampDownSpeed = 1f;
+    #endregion
 
+    #region camera whisker parameters
     [Header("Camera whiskers")]
     public bool useCamWhiskers = true;
     public float whiskerPushStrength = 1f;
     [Min(2)] public int numWhiskers = 4;
     public float whiskerLength = 1f;
     [Range(0, 360)] public float whiskerSectorAngle = 180;
+    #endregion
 
+    #region collision avoidance parameters
     [Header("Collision avoidance")]
     public bool avoidCollisionWithGeometry = true;
     public float collisionDetectionDistance = 1f;
     public float collisionPullInSpeed = 1f;
+    #endregion
 
+    #region orbit parameters
     [Header("Target orbit")]
     public bool orbit = true;
     public float orbitSpeed = 10f;
@@ -59,14 +71,28 @@ public class ThirdPersonCameraController : MonoBehaviour
     //tracks current mouse x and y angles
     private float mouseX = 0f;
     private float mouseY = 0f;
+    #endregion
 
-    //Layer masks
+    //previous target positions array
+    public bool usePreviousTargetPositionsForCameraPullIn = true;
+    private Vector3[] previousTargetPositions;
+
+    //virtual camera size
+    private float virtualCameraSphereRadius;
+
+    //camera state
+    private enum CameraState { FollowingTarget, OrbitingTarget, TargetMovingTowardsCamera};
+    private CameraState state;
+
+    /* Layer masks */
     private int occluderLayers;
     private int colliderLayers;
 
     private void Awake()
     {
         cam = GetComponent<Camera>();
+
+        virtualCameraSphereRadius = cam.GetNearClipPaneCentreToCornerDistance();
 
         occluderLayers = LayerMask.GetMask("LevelGeometrySolid");
         colliderLayers = LayerMask.GetMask("LevelGeometrySolid");
@@ -109,7 +135,6 @@ public class ThirdPersonCameraController : MonoBehaviour
         }
         //cam.transform.rotation = GetTargetLookAtRotation(GetCamWhiskerResult(lookAtTarget.transform.position, GetCamWhiskerOffset(), Time.fixedDeltaTime));
 
-        //if (avoidCollisionWithGeometry) 
         if (avoidCollisionWithGeometry)
         {
             cam.transform.position = AvoidCollisions(cam, collisionDetectionDistance, Time.fixedDeltaTime);
@@ -117,6 +142,7 @@ public class ThirdPersonCameraController : MonoBehaviour
         }
     }
 
+#region follow target
     //Returns the desired target follow position as specified by the target's position and the target follow offset params.
     //This is the "ideal" position the camera wants to be in, before taking into consideration obstacle/occlusion avoidance etc.
     private Vector3 GetDesiredFollowPosition(Vector3 desiredOffset)
@@ -153,6 +179,7 @@ public class ThirdPersonCameraController : MonoBehaviour
             return Smoothstep(cam.transform.position, newCamPos, deltaTime * followSpeed);
         }
     }
+#endregion
 
 #region collision avoidance
     //Takes a camera position and avoids obstacles, if any, by instantly moving the camera position in front of the closest obstacle.
@@ -183,12 +210,7 @@ public class ThirdPersonCameraController : MonoBehaviour
             }
             else //pull camera forward to try avoid collision
             {
-                Vector3 targetPos = preserveCameraHeight ?
-                    new Vector3(followTarget.transform.position.x, cam.transform.position.y, followTarget.transform.position.z)
-                    : followTarget.transform.position;
-
-                //Debug.DrawLine(camPos, targetPos, Color.black);
-                newCamPos = Smoothstep(camPos, targetPos, deltaTime * collisionPullInSpeed);
+                newCamPos = PullInCamera(camPos, occlusionPullInSpeedVertical, occlusionPullInSpeedHorizontal, deltaTime);
             }
         }
 
@@ -239,7 +261,7 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         return nextCamPos;
     }
-    #endregion
+#endregion
 
 #region cam whiskers
     //Casts "whisker" rays from the follow target
@@ -270,8 +292,9 @@ public class ThirdPersonCameraController : MonoBehaviour
     {
         return Smoothstep(camPos, camPos + whiskerOffset, whiskerPushStrength * deltaTime);
     }
-#endregion
+    #endregion
 
+#region occlusion
     //Takes the desired camera position and adjusts it so the follow target isn't occluded by objects in the scene.
     //If the follow target would be occluded if the camera moved to desiredPos, this function moves desiredPos towards the follow target.
     //If there are no occluders in the way of the desired position, returns desiredPos unmodified
@@ -280,23 +303,17 @@ public class ThirdPersonCameraController : MonoBehaviour
         Vector3 camPos = cam.transform.position;
         float maxDistance = Vector3.Distance(followTarget.transform.position, camPos);
 
-        if (cam.LinecastsFromNearClipPane(followTarget.transform.position, out _, occluderLayers))
         //if(Physics.BoxCast(camPos, cam.GetNearClipPaneHalfExtents(), followTarget.transform.position - camPos, Quaternion.LookRotation(cam.transform.forward, Vector3.up), maxDistance, occluderLayers))
+        if (cam.LinecastsFromNearClipPane(followTarget.transform.position, out _, occluderLayers, occlusionClipPanePadding))
         {
-            Vector3[] clipPanePoints = cam.GetNearClipPaneCornersWorld();
+            Vector3[] clipPanePoints = cam.GetNearClipPaneCornersWorld(occlusionClipPanePadding);
             foreach(Vector3 corner in clipPanePoints)
             {
-                Debug.DrawRay(corner, followTarget.transform.position - camPos, Color.white);
+                Debug.DrawLine(corner, followTarget.transform.position, Color.white);
             }
 
-            Debug.DrawRay(camPos, (followTarget.transform.position - camPos).normalized * maxDistance, Color.cyan, 0.2f);
-            
-            Vector3 targetPos = preserveCameraHeight ?
-                new Vector3(followTarget.transform.position.x, cam.transform.position.y, followTarget.transform.position.z)
-                : followTarget.transform.position;
-
-            Debug.DrawLine(camPos, targetPos, Color.green);
-            return Smoothstep(camPos, targetPos, deltaTime * occlusionPullInSpeed);
+            Debug.DrawRay(camPos, (followTarget.transform.position - camPos).normalized * maxDistance, Color.cyan);
+            return PullInCamera(camPos, occlusionPullInSpeedVertical, occlusionPullInSpeedHorizontal, deltaTime);
         }
 
         return camPos;
@@ -308,33 +325,9 @@ public class ThirdPersonCameraController : MonoBehaviour
         Vector3 dir = followTarget.transform.position - cam.transform.position;
         return cam.RaycastsFromNearClipPane(dir, out _, dir.magnitude, occluderLayers, clipPanePadding);
     }
+#endregion
 
-    //Takes the camera's desired move direction and checks if moving to it would cause the follow target to be occluded.
-    //If so, returns the move direction shortened to stop before the occluding object, else returns the same move direction vector
-    private Vector3 ShortenMoveDirectionIfMovingIntoOcclusion(Vector3 camMoveDirection, float collisionSphereCheckRadius)
-    {
-        //if moving to desired orbit position would cause the camera to move into occlusion, shorten offset to before that happens
-        if (Physics.SphereCast(followTarget.transform.position, collisionSphereCheckRadius, camMoveDirection, out RaycastHit hit, camMoveDirection.magnitude, occluderLayers))
-        {
-            return followTarget.transform.position + (camMoveDirection.normalized * (Vector3.Distance(followTarget.transform.position, hit.point) - collisionSphereCheckRadius));
-        }
-    
-        return followTarget.transform.position + camMoveDirection;
-    }
-
-    private Vector3 ShortenFollowDistanceToAvoidRearCollision(Vector3 desiredPos)
-    {
-        if (Physics.Linecast(followTarget.transform.position, desiredPos, out RaycastHit hit, colliderLayers))
-        {
-            //return hit.point + (hit.normal * COLLISION_SPHERE_CHECK_RADIUS);
-            return hit.point;
-        }
-        else
-        {
-            return desiredPos;
-        }
-    }
-
+#region orbit
     private Vector3 OrbitTarget(float deltaTime)
     {
         Vector3 camPos = cam.transform.position;
@@ -367,10 +360,48 @@ public class ThirdPersonCameraController : MonoBehaviour
         if (mouseAngle >= 360) return mouseAngle - 360;
         return mouseAngle;
     }
+    #endregion
 
+#region look at target
     //Returns the rotation which will make the camera look at the lookAtTarget
     private Quaternion GetTargetLookAtRotation(Vector3 lookAtTargetPos)
     {
         return Quaternion.LookRotation(lookAtTargetPos - cam.transform.position);
     }
+#endregion
+
+#region general
+    private Vector3 PullInCamera(Vector3 camPos, float speedY, float speedXZ, float deltaTime)
+    {
+        Vector3 targetPos = followTarget.transform.position;
+        float newX = Mathf.SmoothStep(camPos.x, targetPos.x, speedXZ * deltaTime);
+        float newY = Mathf.SmoothStep(camPos.y, targetPos.y, speedY * deltaTime);
+        float newZ = Mathf.SmoothStep(camPos.z, targetPos.z, speedXZ * deltaTime);
+
+        return new Vector3(newX, newY, newZ);
+    }
+
+    private Vector3 ShortenFollowDistanceToAvoidRearCollision(Vector3 desiredPos)
+    {
+        if (Physics.Linecast(followTarget.transform.position, desiredPos, out RaycastHit hit, colliderLayers))
+        {
+            //return hit.point + (hit.normal * virtualCameraSphereRadius);
+            return hit.point;
+        }
+        else
+        {
+            return desiredPos;
+        }
+    }
+#endregion
+
+    private void OnDrawGizmos()
+    {
+        if(UnityEditor.EditorApplication.isPlaying)
+        {
+            Gizmos.color = new Color(1f, 1f, 1f, 0.2f);
+            Gizmos.DrawWireSphere(cam.transform.position + cam.transform.forward * cam.nearClipPlane, virtualCameraSphereRadius);
+        }
+    }
+
 }
