@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using static UnityEditor.EditorGUILayout;
+using ThirdPersonCamera;
 
 [CustomEditor(typeof(ThirdPersonCameraController))]
 public class ThirdPersonCameraControllerInspector : Editor
@@ -10,6 +11,7 @@ public class ThirdPersonCameraControllerInspector : Editor
     private ThirdPersonCameraController cameraController;
 
     //foldout bools
+    private bool showCameraModeParams = false;
     private bool showTargetComponents = false;
     private bool showTargetFollowParams = false;
     private bool showTargetLookParams = false;
@@ -24,6 +26,7 @@ public class ThirdPersonCameraControllerInspector : Editor
         
         cameraController = (ThirdPersonCameraController) target;
 
+        DoCameraMode(cameraController);
         DoTargetComponents(cameraController);
         DoTargetFollowing(cameraController);
         DoTargetLook(cameraController);
@@ -43,14 +46,24 @@ public class ThirdPersonCameraControllerInspector : Editor
         }
     }
 
+    private void DoCameraMode(ThirdPersonCameraController t)
+    {
+        showCameraModeParams = FoldoutHeader(showCameraModeParams, "Camera behaviour mode");
+        if(showCameraModeParams)
+        {
+            t.camMode = (ThirdPersonCameraController.CameraBehaviourMode) EnumPopup("Camera mode", t.camMode);
+        }
+    }
+
     private void DoTargetFollowing(ThirdPersonCameraController t)
     {
         showTargetFollowParams = FoldoutHeader(showTargetFollowParams, "Target follow");
         if(showTargetFollowParams)
         {
-            t.desiredOffset = Vector3Field("Desired offset", t.desiredOffset); 
-            t.minOffset = Vector3Field("Min offset", t.minOffset); 
-            t.maxOffset = Vector3Field("Max offset", t.maxOffset);
+            t.desiredOffset = Vector3Field("Desired offset", t.desiredOffset);
+            //t.followHeightMode = (ThirdPersonCameraController.FollowHeightMode) EnumPopup("Follow height mode", t.followHeightMode);
+            //t.minOffset = Vector3Field("Min offset", t.minOffset); //not currently used
+            //t.maxOffset = Vector3Field("Max offset", t.maxOffset); //not currently used
             t.interpolateTargetFollowing = Toggle("Interpolate", t.interpolateTargetFollowing);
             if(t.interpolateTargetFollowing)
             {
