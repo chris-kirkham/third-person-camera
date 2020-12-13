@@ -137,7 +137,8 @@ public class ThirdPersonCameraController : MonoBehaviour
 
         if (avoidCollisionWithGeometry)
         {
-            cam.transform.position = AvoidCollisions(cam, collisionDetectionDistance, Time.fixedDeltaTime);
+            //cam.transform.position = AvoidCollisions(cam, collisionDetectionDistance, Time.fixedDeltaTime);
+            cam.transform.position = AvoidCollisions_JumpForward(cam);
             //cam.transform.position = AvoidCollisionsContinuous(currentCamPos, currentCamNearClipPaneCorners, cam.transform.position, cam.GetNearClipPaneCornersWorld());
         }
     }
@@ -182,84 +183,43 @@ public class ThirdPersonCameraController : MonoBehaviour
 #endregion
 
 #region collision avoidance
-    //Takes a camera position and avoids obstacles, if any, by instantly moving the camera position in front of the closest obstacle.
-    private Vector3 AvoidCollisions(Camera cam, float collisionCheckDistance, float deltaTime)
+    //Avoids camera clipping with geometry by jumping the camera forward if any of its near clip pane corners are inside geometry
+    private Vector3 AvoidCollisions_JumpForward(Camera cam)
     {
-        Collider[] overlapColliders = new Collider[1];
-
-        Vector3 camPos = cam.transform.position;
-        Vector3 nearClipPaneCentre = camPos + cam.transform.forward * cam.nearClipPlane;
-        Vector3 halfExtents = cam.GetNearClipPaneHalfExtents();
-        Vector3 newCamPos = camPos;
-        bool collisionHit = false;
-        //RaycastHit hit;
-        if (AvoidCollisionsRaycast(ref newCamPos, cam.transform.up, nearClipPaneCentre, halfExtents, collisionCheckDistance)) collisionHit = true; //up
-        if (AvoidCollisionsRaycast(ref newCamPos, cam.transform.right, nearClipPaneCentre, halfExtents, collisionCheckDistance)) collisionHit = true; //right
-        if (AvoidCollisionsRaycast(ref newCamPos, -cam.transform.up, nearClipPaneCentre, halfExtents, collisionCheckDistance)) collisionHit = true; //down
-        if (AvoidCollisionsRaycast(ref newCamPos, -cam.transform.right, nearClipPaneCentre, halfExtents, collisionCheckDistance)) collisionHit = true; //left
-        if (AvoidCollisionsRaycast(ref newCamPos, cam.transform.forward, nearClipPaneCentre, halfExtents, collisionCheckDistance)) collisionHit = true; //forward
-
-        //if one of the collision raycasts hit, check if the camera is also occluded by the colliding geometry; if so, move it in front of the geometry;
-        //else, pull camera forward to try to avoid the collision
-        if (collisionHit)
+        //Check if the camera's virtual size sphere is intersecting with geometry
+        Collider[] colliders = new Collider[1];
+        if(Physics.OverlapSphereNonAlloc(cam.transform.position + cam.transform.forward * cam.nearClipPlane, virtualCameraSphereRadius, colliders) > 0)
         {
-            if(Physics.Linecast(followTarget.transform.position, nearClipPaneCentre, out RaycastHit occlusionHit, colliderLayers))
+            //check if any of the camera's near clip pane corners are inside geometry
+            Vector3[] nearClipPaneCorners = cam.GetNearClipPaneCornersWorld();
+            float longestDistInsideGeometry = 0f;
+            int longestDistCornerIndex = -1;
+            Vector3 longestDistHitPoint = Vector3.zero;
+            RaycastHit hit;
+            for(int i = 0; i < 4; i++)
             {
-                Debug.Log("Camera collision solver: camera inside geometry");
-                newCamPos = occlusionHit.point;
-            }
-            else //pull camera forward to try avoid collision
-            {
-                newCamPos = PullInCamera(camPos, occlusionPullInSpeedVertical, occlusionPullInSpeedHorizontal, deltaTime);
-            }
-        }
-
-        Debug.DrawLine(camPos, newCamPos, Color.green);
-        return Smoothstep(camPos, newCamPos, 0.2f);
-    }
-
-    //Raycast function for collision avoidance; the main collision function casts six of these in each of the camera's cardinal directions.
-    //If the raycast hits a collider on the collision layer(s), updates the ref camera position to avoid the collision, sets the ref RaycastHit to the collision hit,
-    //and returns true, else returns false
-    private bool AvoidCollisionsRaycast(ref Vector3 camPos, Vector3 dir, Vector3 nearClipPaneCentre, Vector3 nearClipPaneHalfExtents, float collisionCheckDistance)
-    {
-        if (Physics.Raycast(nearClipPaneCentre, dir, out RaycastHit hit, collisionCheckDistance, colliderLayers))
-        {
-            //Debug.DrawRay(nearClipPaneCentre, dir * (collisionCheckDistance + nearClipPaneHalfExtents.y), Color.green);
-            camPos -= dir * (collisionCheckDistance - hit.distance);
-            return true;
-        }
-
-        return false;
-    }
-
-    private Vector3 AvoidCollisionsContinuous(Vector3 currentCamPos, Vector3[] currentCamNearClipPaneCorners, Vector3 nextCamPos, Vector3[] nextCamNearClipPaneCorners)
-    {
-        float shortestDistanceToCollision = Mathf.Infinity;
-        int shortestDistanceCornerIndex = -1;
-        RaycastHit shortestDistanceHit = new RaycastHit();
-        for(int i = 0; i < 4; i++)
-        {
-            Debug.DrawLine(currentCamNearClipPaneCorners[i], nextCamNearClipPaneCorners[i], new Color(1, 0, 1));
-            if(Physics.Linecast(currentCamNearClipPaneCorners[i], nextCamNearClipPaneCorners[i], out RaycastHit hit, colliderLayers))
-            {
-                float dist = hit.distance;
-                if(dist < shortestDistanceToCollision)
+                Vector3 followTargetToClipCorner = nearClipPaneCorners[i] - followTarget.transform.position;
+                if (colliders[0].Raycast(new Ray(followTarget.transform.position, followTargetToClipCorner), out hit, followTargetToClipCorner.magnitude))
                 {
-                    shortestDistanceToCollision = dist;
-                    shortestDistanceCornerIndex = i;
-                    shortestDistanceHit = hit;
+                    float dist = Vector3.Distance(hit.point, nearClipPaneCorners[i]);
+                    if (dist > longestDistInsideGeometry)
+                    {
+                        longestDistInsideGeometry = dist;
+                        longestDistCornerIndex = i;
+                        longestDistHitPoint = hit.point;
+                    }
                 }
             }
+
+            //if any clip pane corners are inside geometry, move the camera such that the point deepest inside geometry is touching its ray hit point 
+            if(longestDistCornerIndex != -1)
+            {
+                Debug.DrawRay(longestDistHitPoint, cam.transform.position - nearClipPaneCorners[longestDistCornerIndex], new Color(1, 0, 1), 10f);
+                return longestDistHitPoint + (cam.transform.position - nearClipPaneCorners[longestDistCornerIndex]);
+            }
         }
 
-        if(shortestDistanceCornerIndex != -1)
-        {
-            Vector3 cornerToCamPos = currentCamPos - currentCamNearClipPaneCorners[shortestDistanceCornerIndex];
-            return shortestDistanceHit.point + cornerToCamPos;
-        }
-
-        return nextCamPos;
+        return cam.transform.position;
     }
 #endregion
 
@@ -303,15 +263,8 @@ public class ThirdPersonCameraController : MonoBehaviour
         Vector3 camPos = cam.transform.position;
         float maxDistance = Vector3.Distance(followTarget.transform.position, camPos);
 
-        //if(Physics.BoxCast(camPos, cam.GetNearClipPaneHalfExtents(), followTarget.transform.position - camPos, Quaternion.LookRotation(cam.transform.forward, Vector3.up), maxDistance, occluderLayers))
-        if (cam.LinecastsFromNearClipPane(followTarget.transform.position, out _, occluderLayers, occlusionClipPanePadding))
+        if (IsOccluded(occlusionClipPanePadding))
         {
-            Vector3[] clipPanePoints = cam.GetNearClipPaneCornersWorld(occlusionClipPanePadding);
-            foreach(Vector3 corner in clipPanePoints)
-            {
-                Debug.DrawLine(corner, followTarget.transform.position, Color.white);
-            }
-
             Debug.DrawRay(camPos, (followTarget.transform.position - camPos).normalized * maxDistance, Color.cyan);
             return PullInCamera(camPos, occlusionPullInSpeedVertical, occlusionPullInSpeedHorizontal, deltaTime);
         }
@@ -321,8 +274,14 @@ public class ThirdPersonCameraController : MonoBehaviour
 
     private bool IsOccluded(float clipPanePadding = 0f)
     {
-        //return cam.LinecastsFromNearClipPane(followTarget.transform.position, out _, occluderLayers, clipPanePadding);
         Vector3 dir = followTarget.transform.position - cam.transform.position;
+        
+        //Debug drawing
+        foreach(Vector3 clipPaneCorner in cam.GetNearClipPaneCornersWorld(clipPanePadding))
+        {
+            Debug.DrawRay(clipPaneCorner, dir, Color.white);
+        }
+        //? if(Physics.BoxCast(camPos, cam.GetNearClipPaneHalfExtents(), followTarget.transform.position - camPos, Quaternion.LookRotation(cam.transform.forward, Vector3.up), maxDistance, occluderLayers)) ...
         return cam.RaycastsFromNearClipPane(dir, out _, dir.magnitude, occluderLayers, clipPanePadding);
     }
 #endregion
