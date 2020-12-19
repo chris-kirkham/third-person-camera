@@ -101,6 +101,18 @@ public static class ClipPaneUtils
         return points;
     }
 
+    //returns the local position of the camera's near clip pane centre (i.e. returns a vector of (0, 0, near clip pane distance))
+    public static Vector3 GetNearClipPaneCentreLocal(this Camera cam)
+    {
+        return Vector3.forward * cam.nearClipPlane;
+    }
+
+    //returns the world position of the camera's near clip pane centre
+    public static Vector3 GetNearClipPaneCentreWorld(this Camera cam)
+    {
+        return cam.transform.position + cam.transform.forward * cam.nearClipPlane;
+    }
+
     public static Vector3 GetNearClipPaneHalfExtents(this Camera cam, float clipPanePadding = 0f)
     {
         //clip pane y/x axes multiplied by this to pad clip pane size

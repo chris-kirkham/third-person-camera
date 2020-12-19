@@ -5,14 +5,14 @@ using UnityEditor;
 using static UnityEditor.EditorGUILayout;
 using ThirdPersonCamera;
 
-[CustomEditor(typeof(ThirdPersonCameraController))]
+[CustomEditor(typeof(CameraParams))]
 public class ThirdPersonCameraControllerInspector : Editor
 {
-    private ThirdPersonCameraController cameraController;
+    private CameraParams cameraController;
 
     //foldout bools
     private bool showCameraModeParams = false;
-    private bool showTargetComponents = false;
+    //private bool showTargetComponents = false;
     private bool showTargetFollowParams = false;
     private bool showTargetLookParams = false;
     private bool showOcclusionAvoidanceParams = false;
@@ -22,21 +22,24 @@ public class ThirdPersonCameraControllerInspector : Editor
 
     public override void OnInspectorGUI()
     {
-        //base.OnInspectorGUI();
+        base.OnInspectorGUI();
         
-        cameraController = (ThirdPersonCameraController) target;
+        cameraController = (CameraParams) target;
 
+        //DoTargetComponents(cameraController);
         DoCameraMode(cameraController);
-        DoTargetComponents(cameraController);
         DoTargetFollowing(cameraController);
         DoTargetLook(cameraController);
         DoOcclusionAvoidance(cameraController);
         DoCamWhiskers(cameraController);
         DoCollisionAvoidance(cameraController);
         DoTargetOrbit(cameraController);
+
+        EditorUtility.SetDirty(target);
     }
 
-    private void DoTargetComponents(ThirdPersonCameraController t)
+    /*
+    private void DoTargetComponents(CameraParams t)
     {
         showTargetComponents = FoldoutHeader(showTargetComponents, "Follow/look targets");
         if(showTargetComponents)
@@ -45,22 +48,43 @@ public class ThirdPersonCameraControllerInspector : Editor
             t.lookAtTarget = (GameObject) ObjectField("Look target", t.lookAtTarget, typeof(GameObject), true);
         }
     }
+    */
 
-    private void DoCameraMode(ThirdPersonCameraController t)
+    private void DoCameraMode(CameraParams t)
     {
         showCameraModeParams = FoldoutHeader(showCameraModeParams, "Camera behaviour mode");
         if(showCameraModeParams)
         {
-            t.camMode = (ThirdPersonCameraController.CameraBehaviourMode) EnumPopup("Camera mode", t.camMode);
+            t.camMode = (CameraBehaviourMode) EnumPopup("Camera mode", t.camMode);
+
+            if(t.camMode == CameraBehaviourMode.FollowAndOrbit)
+            {
+                //t.orbitToFollowTransitionDelay = FloatField("Orbit to follow transition delay", t.orbitToFollowTransitionDelay);
+                t.orbitToFollowTransitionSpeed = FloatField("Orbit to follow transition speed", t.orbitToFollowTransitionSpeed);
+            }
         }
     }
 
-    private void DoTargetFollowing(ThirdPersonCameraController t)
+    private void DoTargetFollowing(CameraParams t)
     {
         showTargetFollowParams = FoldoutHeader(showTargetFollowParams, "Target follow");
         if(showTargetFollowParams)
         {
             t.desiredOffset = Vector3Field("Desired offset", t.desiredOffset);
+
+            t.useWorldSpaceOffset = Toggle(new GUIContent("Use world space offset?", "By default, the offset is relative to the follow target's local space." +
+                " Set this to true to use world space offset."), t.useWorldSpaceOffset);
+
+            t.allowMoveTowardsCamera = Toggle(new GUIContent("Target can move towards camera?", "Use the desired front offset when the follow target is facing the camera. Typically," +
+                                "this is used to let the camera stay in front of the target when the target is moving towards it," +
+                                " rather than trying to reorient behind the target"), t.allowMoveTowardsCamera);
+            
+            if (t.allowMoveTowardsCamera)
+            {
+                t.desiredFrontOffset = Vector3Field("Desired front offset", t.desiredFrontOffset);
+            }
+
+
             //t.followHeightMode = (ThirdPersonCameraController.FollowHeightMode) EnumPopup("Follow height mode", t.followHeightMode);
             //t.minOffset = Vector3Field("Min offset", t.minOffset); //not currently used
             //t.maxOffset = Vector3Field("Max offset", t.maxOffset); //not currently used
@@ -72,11 +96,12 @@ public class ThirdPersonCameraControllerInspector : Editor
         }
     }
 
-    private void DoTargetLook(ThirdPersonCameraController t)
+    private void DoTargetLook(CameraParams t)
     {
         showTargetLookParams = FoldoutHeader(showTargetLookParams, "Target look");
         if(showTargetLookParams)
         {
+            t.lookOffset = FloatField("Look offset", t.lookOffset);
             t.interpolateTargetLookAt = Toggle("Interpolate", t.interpolateTargetLookAt);
             if(t.interpolateTargetLookAt)
             {
@@ -85,7 +110,7 @@ public class ThirdPersonCameraControllerInspector : Editor
         }
     }
 
-    private void DoOcclusionAvoidance(ThirdPersonCameraController t)
+    private void DoOcclusionAvoidance(CameraParams t)
     {
         showOcclusionAvoidanceParams = FoldoutHeader(showOcclusionAvoidanceParams, "Occlusion avoidance");
         if(showOcclusionAvoidanceParams)
@@ -98,10 +123,11 @@ public class ThirdPersonCameraControllerInspector : Editor
                 t.occlusionPullInSpeedVertical = FloatField("Pull-in speed vertical", t.occlusionPullInSpeedVertical);
                 t.occlusionIncreaseFollowSpeedMultiplier = FloatField("Increase follow speed", t.occlusionIncreaseFollowSpeedMultiplier);
                 t.occlusionClipPanePadding = FloatField("Near clip pane padding", t.occlusionClipPanePadding);
-                t.preserveCameraHeight = Toggle("Preserve camera height", t.preserveCameraHeight);
+                //t.preserveCameraHeight = Toggle("Preserve camera height", t.preserveCameraHeight);
                 t.useTimeInOcclusionMultiplier = Toggle("Ease in/out of occlusion avoidance", t.useTimeInOcclusionMultiplier);
                 if(t.useTimeInOcclusionMultiplier)
                 {
+                    t.maxTimeInOcclusionMultiplier = FloatField("Max ease in/out speed multiplier", t.maxTimeInOcclusionMultiplier);
                     t.timeInOcclusionRampUpSpeed = FloatField("Ease in speed", t.timeInOcclusionRampUpSpeed);
                     t.timeInOcclusionRampDownSpeed = FloatField("Ease out speed", t.timeInOcclusionRampDownSpeed);
                 }
@@ -109,7 +135,7 @@ public class ThirdPersonCameraControllerInspector : Editor
         }
     }
 
-    private void DoCamWhiskers(ThirdPersonCameraController t)
+    private void DoCamWhiskers(CameraParams t)
     {
         showCamWhiskerParams = FoldoutHeader(showCamWhiskerParams, "Camera whiskers");
         if(showCamWhiskerParams)
@@ -125,7 +151,7 @@ public class ThirdPersonCameraControllerInspector : Editor
         }
     }
 
-    private void DoCollisionAvoidance(ThirdPersonCameraController t)
+    private void DoCollisionAvoidance(CameraParams t)
     {
         showCollisionAvoidanceParams = FoldoutHeader(showCollisionAvoidanceParams, "Collision avoidance");
         if(showCollisionAvoidanceParams)
@@ -133,13 +159,12 @@ public class ThirdPersonCameraControllerInspector : Editor
             t.avoidCollisionWithGeometry = Toggle("Avoid collisions", t.avoidCollisionWithGeometry);
             if(t.avoidCollisionWithGeometry)
             {
-                t.collisionDetectionDistance = FloatField("Collision detection distance", t.collisionDetectionDistance);
-                t.collisionPullInSpeed = FloatField("Pull-in speed", t.collisionPullInSpeed);
+                //t.collisionPullInSpeed = FloatField("Pull-in speed", t.collisionPullInSpeed);
             }
         }
     }
 
-    private void DoTargetOrbit(ThirdPersonCameraController t)
+    private void DoTargetOrbit(CameraParams t)
     {
         showTargetOrbitParams = FoldoutHeader(showTargetOrbitParams, "Target orbit");
         if(showTargetOrbitParams)
