@@ -1759,8 +1759,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   cam: {fileID: 963194227}
-  moveSpeed: 1
-  rotationSpeed: 1
+  moveSpeed: 25
+  rotationSpeed: 50
   jumpForce: 1
   groundLayer:
     serializedVersion: 2

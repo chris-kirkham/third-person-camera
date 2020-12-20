@@ -57,16 +57,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\ScriptableObjects\Player\PlayerInfo.cs" />
-    <Compile Include="Assets\Scripts\Camera\CameraStateController.cs" />
-    <Compile Include="Assets\Scripts\Camera\ThirdPersonCameraController.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraStateController.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\ThirdPersonCameraController.cs" />
     <Compile Include="Assets\Scripts\Demo\Player\BallMovement.cs" />
-    <Compile Include="Assets\Scripts\Camera\Utilities\CompositionHelper.cs" />
-    <Compile Include="Assets\Scripts\Camera\CameraParams.cs" />
-    <Compile Include="Assets\Scripts\Camera\CameraEnums.cs" />
-    <Compile Include="Assets\Scripts\Camera\Debug\DebugHUD.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\Utilities\CompositionHelper.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraParams.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraEnums.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\Debug\DebugHUD.cs" />
     <Compile Include="Assets\Scripts\Utilities\Lerps.cs" />
-    <Compile Include="Assets\Scripts\Camera\Utilities\ClipPaneUtils.cs" />
-    <Compile Include="Assets\Scripts\Camera\CameraControllerInput.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\Utilities\ClipPaneUtils.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraControllerInput.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
