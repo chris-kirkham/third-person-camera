@@ -39,6 +39,8 @@ namespace ThirdPersonCamera
         //all camera movement is done here
         private void FixedUpdate()
         {
+            Vector3 initialClipPanePos = cam.transform.position;
+            Debug.Log("initial clip pane pos: " + initialClipPanePos);
             UpdateOcclusionEaseInOutCounters(Time.fixedDeltaTime);
             stateController.UpdateCameraState(cam, followTarget, p);
 
@@ -59,21 +61,20 @@ namespace ThirdPersonCamera
             if (p.useCamWhiskers) cam.transform.position = GetCamWhiskerResult(cam.transform.position, GetCamWhiskerOffset(), Time.fixedDeltaTime);
             if (p.avoidFollowTargetOcclusion) cam.transform.position = GetOcclusionAvoidResult(Time.fixedDeltaTime);
 
-            if (p.interpolateTargetLookAt)
-            {
-                cam.transform.rotation = Quaternion.Lerp(cam.transform.rotation, GetTargetLookAtRotation(), Time.fixedDeltaTime * p.targetLookAtLerpSpeed);
-            }
-            else
-            {
-                cam.transform.rotation = GetTargetLookAtRotation(); 
-            }
+            cam.transform.rotation = LookAtTarget(cam, Time.fixedDeltaTime);
 
-            //cam.transform.rotation = GetTargetLookAtRotation(GetCamWhiskerResult(lookAtTarget.transform.position, GetCamWhiskerOffset(), Time.fixedDeltaTime));
 
             if (p.avoidCollisionWithGeometry)
             {
-                cam.transform.position = AvoidCollisions_JumpForward(cam);
+                cam.transform.position = AvoidCollisions_JumpForward(initialClipPanePos, cam);
             }
+
+            //clamp camera distance to max distance
+            if (p.useMaxDistance)
+            {
+                cam.transform.position = ClampCameraDistance(cam);
+            }
+
         }
 
         #region follow target
@@ -112,7 +113,7 @@ namespace ThirdPersonCamera
             Vector3 desiredPos = GetDesiredFollowPosition(state);
             Debug.DrawLine(cam.transform.position, desiredPos, Color.red);
 
-            Vector3 newCamPos = ShortenFollowDistanceToAvoidRearCollision(desiredPos);
+            Vector3 newCamPos = p.avoidFollowTargetOcclusion ? ShortenFollowDistanceToAvoidRearCollision(desiredPos) : desiredPos;
 
             Debug.DrawLine(cam.transform.position, newCamPos, Color.yellow);
 
@@ -129,69 +130,51 @@ namespace ThirdPersonCamera
 
         #region collision avoidance
         //Avoids camera clipping with geometry by jumping the camera forward if any of its near clip pane corners are inside geometry
-        private Vector3 AvoidCollisions_JumpForward(Camera cam)
+        private Vector3 AvoidCollisions_JumpForward(Vector3 initialNearClipPanePos, Camera updatedCam)
         {
-            //TODO: Sometimes causes jittering back and forward 
-            //(Seems to be: camera jumps forward, then doesn't see a collision until it's moved behind the object, then sees a collision and jumps forward...)
-            //possibly due to only checking the first hit collider?
-
             //Check if the camera's virtual size sphere is intersecting with geometry
-            Collider[] overlapSphereCollider = new Collider[1];
-            if (Physics.OverlapSphereNonAlloc(cam.transform.position + cam.transform.forward * cam.nearClipPlane, virtualCameraSphereRadius, overlapSphereCollider) > 0)
+            HashSet<Collider> overlapSphereColliders = new HashSet<Collider>(Physics.OverlapSphere(updatedCam.GetNearClipPaneCentreWorld(), virtualCameraSphereRadius, p.colliderLayerMask));
+            //HashSet<Collider> overlapSphereColliders = GetCollidersBetweenCameraPositions(initialNearClipPanePos, updatedCam.GetNearClipPaneCentreWorld());
+            if (overlapSphereColliders.Count > 0) //If so, cast a sphere back from follow target to camera's near clip pane
             {
-                //If so, cast a sphere back from follow target to camera's near clip pane
-                Vector3 followTargetToNearClip = cam.GetNearClipPaneCentreWorld() - followTarget.transform.position;
+                Vector3 avoidPositions = Vector3.zero;
+                int colliderSphereHits = 0;
+                Vector3 followTargetToNearClip = updatedCam.GetNearClipPaneCentreWorld() - followTarget.transform.position;
                 RaycastHit[] hits = Physics.SphereCastAll(followTarget.transform.position, virtualCameraSphereRadius, followTargetToNearClip, followTargetToNearClip.magnitude, p.colliderLayerMask);
-                foreach(RaycastHit hit in hits)
+                
+                foreach (RaycastHit hit in hits) //for each sphere hit, check if the hit is on a collider in our OverlapSphere colliders list; adjust camera position based on hit if so
                 {
-                    if(hit.collider == overlapSphereCollider[0]) 
+                    if (overlapSphereColliders.Contains(hit.collider)) 
                     {
                         Debug.DrawLine(followTarget.transform.position, hit.point, Color.green);
+                        
+                        //note: the hit.distance of a RaycastHit from a sphere cast is the distance to the centre of the sphere that hit something,
+                        //not the distance to the hit point: https://answers.unity.com/questions/882631/how-to-get-the-center-of-a-capsulecast.html
                         Vector3 hitSphereCentre = followTarget.transform.position + followTargetToNearClip.normalized * hit.distance;
-                        Debug.DrawRay(hitSphereCentre, Vector3.up, Color.blue);
-                        return hitSphereCentre - cam.transform.forward * cam.nearClipPlane;
-                    }
-                }
-            }
-
-            /*
-            //OLD METHOD - CHECK CLIP PANE CORNERS
-            //Check if the camera's virtual size sphere is intersecting with geometry
-            Collider[] colliders = new Collider[1];
-            if (Physics.OverlapSphereNonAlloc(cam.transform.position + cam.transform.forward * cam.nearClipPlane, virtualCameraSphereRadius, colliders) > 0)
-            {
-                //check if any of the camera's near clip pane corners are inside geometry
-                Vector3[] nearClipPaneCorners = cam.GetNearClipPaneCornersWorld();
-                float longestDistInsideGeometry = 0f;
-                int longestDistCornerIndex = -1;
-                Vector3 longestDistHitPoint = Vector3.zero;
-                RaycastHit hit;
-                for (int i = 0; i < 4; i++)
-                {
-                    Vector3 followTargetToClipCorner = nearClipPaneCorners[i] - followTarget.transform.position;
-                    if (colliders[0].Raycast(new Ray(followTarget.transform.position, followTargetToClipCorner), out hit, followTargetToClipCorner.magnitude))
-                    {
-                        Debug.DrawLine(followTarget.transform.position, hit.point, new Color(1, 0.5f, 1));
-                        float dist = Vector3.Distance(hit.point, nearClipPaneCorners[i]);
-                        if (dist > longestDistInsideGeometry)
-                        {
-                            longestDistInsideGeometry = dist;
-                            longestDistCornerIndex = i;
-                            longestDistHitPoint = hit.point;
-                        }
+                        avoidPositions += hitSphereCentre - updatedCam.transform.forward * updatedCam.nearClipPlane;
+                        colliderSphereHits++;
                     }
                 }
 
-                //if any clip pane corners are inside geometry, move the camera such that the point deepest inside geometry is touching its ray hit point 
-                if (longestDistCornerIndex != -1)
+                if (colliderSphereHits > 0)
                 {
-                    Debug.DrawRay(longestDistHitPoint, cam.transform.position - nearClipPaneCorners[longestDistCornerIndex], new Color(1, 0, 1));
-                    return longestDistHitPoint + (cam.transform.position - nearClipPaneCorners[longestDistCornerIndex]);
+                    return avoidPositions / colliderSphereHits; //return average of avoid vectors
                 }
             }
-            */
 
-            return cam.transform.position;
+            return updatedCam.transform.position;
+        }
+
+        //Returns colliders between two camera positions as a HashSet, using the camera's virtual size to sphere cast.
+        //Intended use is to detect collisions by casting between the camera near clip position at the start of the update tick and its position after all movement
+        //except collision avoidance has been applied
+        private HashSet<Collider> GetCollidersBetweenCameraPositions(Vector3 initialNearClipPane, Vector3 updatedNearClipPane)
+        {
+            Vector3 initialToUpdatedNearClip = updatedNearClipPane - initialNearClipPane;
+            RaycastHit[] hits = Physics.SphereCastAll(initialNearClipPane, virtualCameraSphereRadius, initialToUpdatedNearClip, initialToUpdatedNearClip.magnitude, p.colliderLayerMask);
+            HashSet<Collider> colliders = new HashSet<Collider>();
+            foreach (RaycastHit hit in hits) colliders.Add(hit.collider);
+            return colliders;
         }
         #endregion
 
@@ -275,20 +258,43 @@ namespace ThirdPersonCamera
             Quaternion rotation = Quaternion.Euler(clampedAngles.y, clampedAngles.x, 0f);
             Vector3 desiredPos = followTarget.transform.position + rotation * p.desiredOffset;
 
-            return Vector3.Lerp(cam.transform.position, ShortenFollowDistanceToAvoidRearCollision(desiredPos), deltaTime * p.orbitSpeed);
+            return Vector3.Lerp(cam.transform.position, p.avoidFollowTargetOcclusion ? ShortenFollowDistanceToAvoidRearCollision(desiredPos) : desiredPos, deltaTime * p.orbitSpeed);
         }
         #endregion
 
         #region look at target
         //Returns the rotation which will make the camera look at the lookAtTarget
-        private Quaternion GetTargetLookAtRotation()
+        private Quaternion GetDesiredLookAtTargetRotation()
         {
             Transform lookAtTransform = lookAtTarget.transform;
             return Quaternion.LookRotation((lookAtTransform.position + new Vector3(lookAtTransform.right.x, 0f, lookAtTransform.right.z).normalized * p.lookOffset) - cam.transform.position);
         }
+
+        private Quaternion LookAtTarget(Camera cam, float deltaTime)
+        {
+            if (p.interpolateTargetLookAt)
+            {
+                return Quaternion.Lerp(cam.transform.rotation, GetDesiredLookAtTargetRotation(), deltaTime * p.targetLookAtLerpSpeed);
+            }
+            else
+            {
+                return GetDesiredLookAtTargetRotation();
+            }
+        }
         #endregion
 
         #region general
+        private Vector3 ClampCameraDistance(Camera cam)
+        {
+            Vector3 followTargetToCam = cam.transform.position - followTarget.transform.position;
+            if (followTargetToCam.magnitude > p.maxDistanceFromTarget)
+            {
+                return followTarget.transform.position + followTargetToCam.normalized * p.maxDistanceFromTarget;
+            }
+
+            return cam.transform.position;
+        }
+
         private Vector3 PullInCamera(Vector3 camPos, float speedY, float speedXZ, float deltaTime)
         {
             Vector3 targetPos = followTarget.transform.position;
@@ -301,10 +307,18 @@ namespace ThirdPersonCamera
 
         private Vector3 ShortenFollowDistanceToAvoidRearCollision(Vector3 desiredPos)
         {
-            if (Physics.Linecast(followTarget.transform.position, desiredPos, out RaycastHit hit, p.colliderLayerMask))
+            Vector3 desiredDir = desiredPos - followTarget.transform.position;
+            if (Physics.SphereCast(followTarget.transform.position, virtualCameraSphereRadius, desiredDir, out RaycastHit hit, desiredDir.magnitude, p.colliderLayerMask))
             {
-                //return hit.point + (hit.normal * virtualCameraSphereRadius);
-                return hit.point;
+                Debug.DrawRay(followTarget.transform.position, (desiredDir.normalized * hit.distance), new Color(1, 1, 0));
+                Debug.DrawRay(followTarget.transform.position + (desiredDir.normalized * hit.distance), Vector3.up * virtualCameraSphereRadius, Color.white);
+                Debug.DrawRay(followTarget.transform.position + (desiredDir.normalized * hit.distance), Vector3.right * virtualCameraSphereRadius, Color.white);
+                Debug.DrawRay(followTarget.transform.position + (desiredDir.normalized * hit.distance), Vector3.down * virtualCameraSphereRadius, Color.white);
+                Debug.DrawRay(followTarget.transform.position + (desiredDir.normalized * hit.distance), Vector3.left * virtualCameraSphereRadius, Color.white);
+                Debug.DrawRay(followTarget.transform.position + (desiredDir.normalized * hit.distance), Vector3.forward * virtualCameraSphereRadius, Color.white);
+                Debug.DrawRay(followTarget.transform.position + (desiredDir.normalized * hit.distance), Vector3.back * virtualCameraSphereRadius, Color.white);
+
+                return followTarget.transform.position + (desiredDir.normalized * hit.distance);
             }
             else
             {

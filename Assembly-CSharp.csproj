@@ -61,12 +61,12 @@
     <Compile Include="Assets\Scripts\Camera\ThirdPersonCameraController.cs" />
     <Compile Include="Assets\Scripts\Demo\Player\BallMovement.cs" />
     <Compile Include="Assets\Scripts\Camera\Utilities\CompositionHelper.cs" />
+    <Compile Include="Assets\Scripts\Camera\CameraParams.cs" />
     <Compile Include="Assets\Scripts\Camera\CameraEnums.cs" />
     <Compile Include="Assets\Scripts\Camera\Debug\DebugHUD.cs" />
     <Compile Include="Assets\Scripts\Utilities\Lerps.cs" />
     <Compile Include="Assets\Scripts\Camera\Utilities\ClipPaneUtils.cs" />
     <Compile Include="Assets\Scripts\Camera\CameraControllerInput.cs" />
-    <Compile Include="Assets\Scripts\Camera\CameraParams.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

@@ -1,14 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEditor;
 using static UnityEditor.EditorGUILayout;
+using UnityEditorInternal;
 using ThirdPersonCamera;
 
 [CustomEditor(typeof(CameraParams))]
-public class ThirdPersonCameraControllerInspector : Editor
+public class CameraParamsInspector : Editor
 {
-    private CameraParams cameraController;
+    private CameraParams cameraParams;
 
     //foldout bools
     private bool showCameraModeParams = false;
@@ -19,21 +18,23 @@ public class ThirdPersonCameraControllerInspector : Editor
     private bool showCamWhiskerParams = false;
     private bool showCollisionAvoidanceParams = false;
     private bool showTargetOrbitParams = false;
+    private bool showLayerMaskParams = false;
 
     public override void OnInspectorGUI()
     {
-        base.OnInspectorGUI();
+        //base.OnInspectorGUI();
         
-        cameraController = (CameraParams) target;
+        cameraParams = (CameraParams) target;
 
         //DoTargetComponents(cameraController);
-        DoCameraMode(cameraController);
-        DoTargetFollowing(cameraController);
-        DoTargetLook(cameraController);
-        DoOcclusionAvoidance(cameraController);
-        DoCamWhiskers(cameraController);
-        DoCollisionAvoidance(cameraController);
-        DoTargetOrbit(cameraController);
+        DoCameraMode(cameraParams);
+        DoTargetFollowing(cameraParams);
+        DoTargetLook(cameraParams);
+        DoOcclusionAvoidance(cameraParams);
+        DoCamWhiskers(cameraParams);
+        DoCollisionAvoidance(cameraParams);
+        DoTargetOrbit(cameraParams);
+        DoLayerMasks(cameraParams);
 
         EditorUtility.SetDirty(target);
     }
@@ -71,6 +72,12 @@ public class ThirdPersonCameraControllerInspector : Editor
         if(showTargetFollowParams)
         {
             t.desiredOffset = Vector3Field("Desired offset", t.desiredOffset);
+            t.useMaxDistance = Toggle("Clamp camera distance from target", t.useMaxDistance);
+            
+            if(t.useMaxDistance)
+            {
+                t.maxDistanceFromTarget = FloatField("Max distance", t.maxDistanceFromTarget);    
+            }
 
             t.useWorldSpaceOffset = Toggle(new GUIContent("Use world space offset?", "By default, the offset is relative to the follow target's local space." +
                 " Set this to true to use world space offset."), t.useWorldSpaceOffset);
@@ -89,6 +96,7 @@ public class ThirdPersonCameraControllerInspector : Editor
             //t.minOffset = Vector3Field("Min offset", t.minOffset); //not currently used
             //t.maxOffset = Vector3Field("Max offset", t.maxOffset); //not currently used
             t.interpolateTargetFollowing = Toggle("Interpolate", t.interpolateTargetFollowing);
+            
             if(t.interpolateTargetFollowing)
             {
                 t.followSpeed = FloatField("Follow speed", t.followSpeed);
@@ -157,10 +165,6 @@ public class ThirdPersonCameraControllerInspector : Editor
         if(showCollisionAvoidanceParams)
         {
             t.avoidCollisionWithGeometry = Toggle("Avoid collisions", t.avoidCollisionWithGeometry);
-            if(t.avoidCollisionWithGeometry)
-            {
-                //t.collisionPullInSpeed = FloatField("Pull-in speed", t.collisionPullInSpeed);
-            }
         }
     }
 
@@ -177,6 +181,20 @@ public class ThirdPersonCameraControllerInspector : Editor
                 t.minOrbitYAngle = FloatField("Min Y angle", t.minOrbitYAngle);
                 t.maxOrbitYAngle = FloatField("Max Y angle", t.maxOrbitYAngle);
             }
+        }
+    }
+
+    private void DoLayerMasks(CameraParams t)
+    {
+        showLayerMaskParams = FoldoutHeader(showLayerMaskParams, "Layer masks");
+        if(showLayerMaskParams)
+        {
+            //https://answers.unity.com/questions/42996/how-to-create-layermask-field-in-a-custom-editorwi.html
+            //just doing t.whateverMask = MaskField("..", t.colliderLayerMask, InternalEditorUtility.layers) makes the actual mask value one up from whatever the inspector shows, for some reason
+            LayerMask colliderLayers = MaskField("Camera colliders", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.colliderLayerMask), InternalEditorUtility.layers);
+            t.colliderLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(colliderLayers);
+            LayerMask occluderLayers = MaskField("Camera occluders", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.occluderLayerMask), InternalEditorUtility.layers);
+            t.occluderLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(occluderLayers);
         }
     }
 

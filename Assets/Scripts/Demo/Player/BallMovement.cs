@@ -12,6 +12,7 @@ public class BallMovement : MonoBehaviour
 
     public Camera cam;
     public float moveSpeed = 1f;
+    public float rotationSpeed = 1f;
     public float jumpForce = 1f;
     public LayerMask groundLayer;
 
@@ -33,6 +34,6 @@ public class BallMovement : MonoBehaviour
             rb.AddForce(Vector3.up, ForceMode.Impulse);
         }
 
-        if(rb.velocity.magnitude > 0.01f) transform.forward = Vector3.Lerp(transform.forward, new Vector3(rb.velocity.normalized.x, 0f, rb.velocity.normalized.z), 0.5f);
+        if(rb.velocity.magnitude > 0.01f) transform.forward = Vector3.Lerp(transform.forward, new Vector3(rb.velocity.normalized.x, 0f, rb.velocity.normalized.z), Time.fixedDeltaTime * rotationSpeed);
     }
 }

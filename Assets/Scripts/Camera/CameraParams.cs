@@ -16,6 +16,8 @@ namespace ThirdPersonCamera
         #region target follow parameters
         [Header("Target following")]
         public Vector3 desiredOffset = Vector3.back;
+        public bool useMaxDistance = true;
+        public float maxDistanceFromTarget = 10f; 
         public bool useWorldSpaceOffset = false; //false = transform offset to follow target's local space
         public bool allowMoveTowardsCamera = true;
         public Vector3 desiredFrontOffset = Vector3.forward;
@@ -63,7 +65,6 @@ namespace ThirdPersonCamera
         #region collision avoidance parameters
         [Header("Collision avoidance")]
         public bool avoidCollisionWithGeometry = true;
-        //public float collisionPullInSpeed = 1f;
         #endregion
 
         #region orbit parameters
