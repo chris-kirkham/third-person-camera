@@ -133,8 +133,8 @@ namespace ThirdPersonCamera
         private Vector3 AvoidCollisions_JumpForward(Vector3 initialNearClipPanePos, Camera updatedCam)
         {
             //Check if the camera's virtual size sphere is intersecting with geometry
-            HashSet<Collider> overlapSphereColliders = new HashSet<Collider>(Physics.OverlapSphere(updatedCam.GetNearClipPaneCentreWorld(), virtualCameraSphereRadius, p.colliderLayerMask));
-            //HashSet<Collider> overlapSphereColliders = GetCollidersBetweenCameraPositions(initialNearClipPanePos, updatedCam.GetNearClipPaneCentreWorld());
+            //HashSet<Collider> overlapSphereColliders = new HashSet<Collider>(Physics.OverlapSphere(updatedCam.GetNearClipPaneCentreWorld(), virtualCameraSphereRadius, p.colliderLayerMask));
+            HashSet<Collider> overlapSphereColliders = GetCollidersBetweenCameraPositions(initialNearClipPanePos, updatedCam.GetNearClipPaneCentreWorld());
             if (overlapSphereColliders.Count > 0) //If so, cast a sphere back from follow target to camera's near clip pane
             {
                 Vector3 avoidPositions = Vector3.zero;

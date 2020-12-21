@@ -12,24 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 333f607575596a44395ae773e6d12e5c, type: 3}
   m_Name: ThirdPersonFollowAndOrbit
   m_EditorClassIdentifier: 
-  camMode: 1
+  camMode: 0
   orbitToFollowTransitionSpeed: 1
-  desiredOffset: {x: 0, y: 2, z: -8}
+  desiredOffset: {x: 0, y: 1, z: -2}
   useMaxDistance: 1
-  maxDistanceFromTarget: 16
+  maxDistanceFromTarget: 32
   useWorldSpaceOffset: 0
   allowMoveTowardsCamera: 0
   desiredFrontOffset: {x: 0, y: 0, z: 1}
   followHeightMode: 0
   interpolateTargetFollowing: 1
-  followSpeed: 4
+  followSpeed: 2
   lookOffset: 0
-  interpolateTargetLookAt: 0
-  targetLookAtLerpSpeed: 32
+  interpolateTargetLookAt: 1
+  targetLookAtLerpSpeed: 4
   avoidFollowTargetOcclusion: 1
-  occlusionPullInSpeedHorizontal: 0
+  occlusionPullInSpeedHorizontal: 4
   occlusionPullInSpeedVertical: 4
-  occlusionIncreaseFollowSpeedMultiplier: 8
+  occlusionIncreaseFollowSpeedMultiplier: 16
   occlusionClipPanePadding: 0
   useTimeInOcclusionMultiplier: 1
   maxTimeInOcclusionMultiplier: 10
