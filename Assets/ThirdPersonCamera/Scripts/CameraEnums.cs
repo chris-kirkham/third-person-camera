@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace ThirdPersonCamera
 {
-    public enum CameraState { FollowingTarget, OrbitingTarget, TargetMovingTowardsCamera, TransitioningFromOrbitToFollow };
+    public enum CameraState { FollowingTarget, OrbitingTarget, TargetMovingTowardsCamera, OrbitToFollow_HoldingOrbitAngle, OrbitToFollow_Transitioning };
 
     public enum CameraBehaviourMode { Follow, Orbit, FollowAndOrbit };
 

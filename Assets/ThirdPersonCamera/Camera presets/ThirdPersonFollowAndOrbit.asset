@@ -12,29 +12,31 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 333f607575596a44395ae773e6d12e5c, type: 3}
   m_Name: ThirdPersonFollowAndOrbit
   m_EditorClassIdentifier: 
-  camMode: 0
-  orbitToFollowTransitionSpeed: 1
-  desiredOffset: {x: 0, y: 1, z: -2}
+  camMode: 1
+  orbitToFollowHoldTime: 5
+  orbitToFollowTransitionTime: 1
+  desiredOffset: {x: 0, y: 0, z: -3}
   useMaxDistance: 1
-  maxDistanceFromTarget: 32
+  maxDistanceFromTarget: 3
   useWorldSpaceOffset: 0
-  allowMoveTowardsCamera: 0
+  allowMoveTowardsCamera: 1
+  movingTowardsCameraAngleRange: 15
   desiredFrontOffset: {x: 0, y: 0, z: 1}
   followHeightMode: 0
-  interpolateTargetFollowing: 1
-  followSpeed: 2
+  interpolateTargetFollow: 1
+  followSpeed: 4
   lookOffset: 0
-  interpolateTargetLookAt: 1
-  targetLookAtLerpSpeed: 4
+  interpolateTargetLookAt: 0
+  targetLookAtLerpSpeed: 16
   avoidFollowTargetOcclusion: 1
   occlusionPullInSpeedHorizontal: 4
   occlusionPullInSpeedVertical: 4
-  occlusionIncreaseFollowSpeedMultiplier: 16
+  occlusionIncreaseFollowSpeedMultiplier: 4
   occlusionClipPanePadding: 0
   useTimeInOcclusionMultiplier: 1
   maxTimeInOcclusionMultiplier: 10
   timeInOcclusionRampUpSpeed: 1
-  timeInOcclusionRampDownSpeed: 1
+  timeInOcclusionRampDownSpeed: 0.5
   useCamWhiskers: 0
   whiskerPushStrength: 1
   numWhiskers: 4
@@ -42,8 +44,8 @@ MonoBehaviour:
   whiskerSectorAngle: 180
   avoidCollisionWithGeometry: 1
   orbit: 1
-  orbitSpeed: 10
-  orbitSensitivity: 10
+  orbitSpeed: 50
+  orbitSensitivity: 20
   minOrbitYAngle: -45
   maxOrbitYAngle: 45
   usePreviousTargetPositionsForCameraPullIn: 1

@@ -55,21 +55,12 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\Scripts\ScriptableObjects\Player\PlayerInfo.cs" />
-     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraStateController.cs" />
-     <Compile Include="Assets\ThirdPersonCamera\Scripts\ThirdPersonCameraController.cs" />
-     <Compile Include="Assets\Scripts\Demo\Player\BallMovement.cs" />
-     <Compile Include="Assets\ThirdPersonCamera\Scripts\Utilities\CompositionHelper.cs" />
-     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraParams.cs" />
-     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraEnums.cs" />
-     <Compile Include="Assets\ThirdPersonCamera\Scripts\Debug\DebugHUD.cs" />
-     <Compile Include="Assets\Scripts\Utilities\Lerps.cs" />
-     <Compile Include="Assets\ThirdPersonCamera\Scripts\Utilities\ClipPaneUtils.cs" />
-     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraControllerInput.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\TargetScanner.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Senders\TriggerCommand.cs" />
+     <Compile Include="Assets\Scripts\ScriptableObjects\Player\PlayerInfo.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TimeDilation\TimeDilationTrack.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Weapon\TimeEffect.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraStateController.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Senders\SendOnCollisionStay.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Weapon\Projectile.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Collectable.cs" />
@@ -83,6 +74,7 @@
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Audio\RandomAudioPlayer.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Senders\SendOnBecameVisible.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Senders\SendOnTriggerEnter.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\ThirdPersonCameraController.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TimeDilation\TimeDilationBehaviour.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\NavMeshAgentControl\NavMeshAgentControlTrack.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Senders\SendOnCollisionEnter.cs" />
@@ -98,7 +90,9 @@
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Platforms\Runtime\Platform.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TransformTween\TransformTweenBehaviour.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Scripts\SoundTrackVolume.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\SharedCameraComponents.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Effects\CaptureDepthTexture.cs" />
+     <Compile Include="Assets\Scripts\Demo\Player\BallMovement.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\NavMeshAgentControl\NavMeshAgentControlClip.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\GameCommandReceiver.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TextSwitcher\TextSwitcherTrack.cs" />
@@ -106,19 +100,24 @@
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TransformTween\TransformTweenTrack.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Core\FPSTarget.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\GameCommandHandler.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\Utilities\CompositionHelper.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Weapon\MeleeWeapon.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Effects\EffectEvents.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\StartPlayableDirector.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Effects\CopyShadowMap.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraParams.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraEnums.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Graphics\ModulatedLight.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\InspectorHelpMessage.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\StandardMaterialEmission\StandardMaterialEmissionTrack.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TextSwitcher\TextSwitcherClip.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TimeDilation\TimeDilationClip.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\Debug\DebugHUD.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TextSwitcher\TextSwitcherBehaviour.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Senders\SendOnBecameInvisible.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Scripts\SoundTrack.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\DamageSystem\DamageZone.cs" />
+     <Compile Include="Assets\Scripts\Utilities\Lerps.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Core\EllenSpawn.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\SimpleTranslator.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\LayerMaskExtensions.cs" />
@@ -137,6 +136,7 @@
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\ScreenFader\ScreenFaderTrack.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\SimpleTransformer.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Player\StateMachineBehaviour\EllenSetTargetableSMB.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\Utilities\ClipPaneUtils.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Senders\SendOnTriggerStay.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\PlaySound.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\NavMeshAgentControl\NavMeshAgentControlBehaviour.cs" />
@@ -173,6 +173,7 @@
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\MessageSystem.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\PrettyListAttribute.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TransformTween\TransformTweenClip.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraControllerInput.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\BatchProcessor.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\ScreenFader\ScreenFaderMixerBehaviour.cs" />
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />
@@ -226,8 +227,14 @@
  <Reference Include="Unity.Timeline">
  <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Timeline.dll</HintPath>
  </Reference>
+ <Reference Include="Unity.Postprocessing.Editor">
+ <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Postprocessing.Editor.dll</HintPath>
+ </Reference>
  <Reference Include="Unity.Rider.Editor">
  <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Rider.Editor.dll</HintPath>
+ </Reference>
+ <Reference Include="Unity.Postprocessing.Runtime">
+ <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Postprocessing.Runtime.dll</HintPath>
  </Reference>
  <Reference Include="Unity.VisualStudio.Editor">
  <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll</HintPath>
@@ -240,12 +247,6 @@
  </Reference>
  <Reference Include="UnityEditor.UI">
  <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
- </Reference>
- <Reference Include="Unity.Postprocessing.Editor">
- <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Postprocessing.Editor.dll</HintPath>
- </Reference>
- <Reference Include="Unity.Postprocessing.Runtime">
- <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Postprocessing.Runtime.dll</HintPath>
  </Reference>
  <Reference Include="UnityEngine.AIModule">
  <HintPath>C:/Program Files/Unity/Hub/Editor/2020.1.15f1/Editor/Data/Managed/UnityEngine/UnityEngine.AIModule.dll</HintPath>

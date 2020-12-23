@@ -55,7 +55,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-     <Compile Include="Assets\ThirdPersonCamera\Scripts\Editor\CameraParamsInspector.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TransformTween\Editor\TransformTweenDrawer.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\LightControl\Editor\LightControlDrawer.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TimeDilation\Editor\TimeDilationDrawer.cs" />
@@ -67,6 +66,7 @@
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Editor\CommandReceiverEditor.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Player\Editor\PlayerControllerEditor.cs" />
      <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Editor\SendGameCommandEditor.cs" />
+     <Compile Include="Assets\ThirdPersonCamera\Scripts\Editor\CameraParamsInspector.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Editor\AutoSetQualitySetting.cs" />
      <Compile Include="Assets\3DGamekitLite\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
      <Compile Include="Assets\3DGamekitLite\Scripts\Game\Core\Editor\AddObjectiveSubEditor.cs" />
@@ -109,8 +109,14 @@
  <Reference Include="Unity.Timeline">
  <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Timeline.dll</HintPath>
  </Reference>
+ <Reference Include="Unity.Postprocessing.Editor">
+ <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Postprocessing.Editor.dll</HintPath>
+ </Reference>
  <Reference Include="Unity.Rider.Editor">
  <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Rider.Editor.dll</HintPath>
+ </Reference>
+ <Reference Include="Unity.Postprocessing.Runtime">
+ <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Postprocessing.Runtime.dll</HintPath>
  </Reference>
  <Reference Include="Unity.VisualStudio.Editor">
  <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.VisualStudio.Editor.dll</HintPath>
@@ -123,12 +129,6 @@
  </Reference>
  <Reference Include="UnityEditor.UI">
  <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/UnityEditor.UI.dll</HintPath>
- </Reference>
- <Reference Include="Unity.Postprocessing.Editor">
- <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Postprocessing.Editor.dll</HintPath>
- </Reference>
- <Reference Include="Unity.Postprocessing.Runtime">
- <HintPath>C:/Users/Chris/Unity/third-person-camera/Library/ScriptAssemblies/Unity.Postprocessing.Runtime.dll</HintPath>
  </Reference>
  <Reference Include="UnityEngine.AIModule">
  <HintPath>C:/Program Files/Unity/Hub/Editor/2020.1.15f1/Editor/Data/Managed/UnityEngine/UnityEngine.AIModule.dll</HintPath>

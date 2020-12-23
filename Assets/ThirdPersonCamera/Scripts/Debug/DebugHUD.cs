@@ -38,7 +38,7 @@ namespace ThirdPersonCamera
             headerText.text = "Camera: " + cam.name;
             positionText.text = "Position: " + cam.transform.position.ToString();
             stateText.text = "State: " + stateController.GetCameraState().ToString();
-            inputText.text = "Orbit angles: " + camInput.GetOrbitAngles().ToString();
+            inputText.text = "Orbit input: " + camInput.GetOrbitInput().ToString();
         }
     }
 }

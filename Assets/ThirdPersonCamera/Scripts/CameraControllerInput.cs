@@ -7,45 +7,59 @@ namespace ThirdPersonCamera
     /// <summary>
     /// Handles user input for the third-person camera controller.
     /// </summary>
+    [RequireComponent(typeof(SharedCameraComponents))]
     public class CameraControllerInput : MonoBehaviour
     {
-        /* orbit */
-        [SerializeField] private float orbitSensitivity = 10f;
+        private CameraParams camParams;
 
         //current orbit x and y angles
-        private Vector2 orbitAngles = Vector2.zero;
+        private Vector2 orbitInput = Vector2.zero; //orbit input multiplied by orbit sensitivity
+        private Vector2 rawOrbitInput = Vector2.zero;
 
         //flag set if orbit angle has changed since last tick
         public bool OrbitAngleChanged { get; private set; } = false;
 
+        /* Input settings */
+        //invert y
+        [SerializeField] private bool invertY = false;
+
+        //orbit input smoothing
+        [SerializeField] private bool useOrbitInputSmoothing = false;
+        [SerializeField] private float smoothingSharpness = 100;
+
+        void Awake()
+        {
+            camParams = GetComponent<SharedCameraComponents>().cameraParams;
+        }
+
         void Update()
         {
-            UpdateOrbitAngles();
+            UpdateOrbitInput(Time.deltaTime);
         }
 
-        private void UpdateOrbitAngles()
+        private void UpdateOrbitInput(float deltaTime)
         {
-            float inputX = Input.GetAxis("Mouse X") * orbitSensitivity;
-            float inputY = Input.GetAxis("Mouse Y") * orbitSensitivity;
-            
-            OrbitAngleChanged = (inputX > 0 || inputY > 0);
+            //smooth orbit input if using smoothing, or reset it
+            if(useOrbitInputSmoothing)
+            { 
+                //move input towards (0, 0)
+                orbitInput *= Mathf.Clamp01(1 - (deltaTime * smoothingSharpness));
+            }
+            else
+            {
+                orbitInput = Vector2.zero;
+            }
 
-            orbitAngles.x += inputX;
-            orbitAngles.y -= inputY;
-            orbitAngles.x = ClampOrbitAngle(orbitAngles.x);
-            orbitAngles.y = ClampOrbitAngle(orbitAngles.y);
+            rawOrbitInput = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
+            if (invertY) rawOrbitInput.y *= -1;
+            orbitInput += rawOrbitInput * camParams.orbitSensitivity;
+
+            OrbitAngleChanged = (orbitInput.x != 0 || orbitInput.y != 0);
         }
 
-        private float ClampOrbitAngle(float angle)
+        public Vector2 GetOrbitInput()
         {
-            if (angle < -360) return angle + 360;
-            if (angle >= 360) return angle - 360;
-            return angle;
-        }
-
-        public Vector2 GetOrbitAngles()
-        {
-            return orbitAngles;
+            return orbitInput;
         }
     }
 }

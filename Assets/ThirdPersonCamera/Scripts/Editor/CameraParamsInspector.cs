@@ -11,7 +11,6 @@ public class CameraParamsInspector : Editor
 
     //foldout bools
     private bool showCameraModeParams = false;
-    //private bool showTargetComponents = false;
     private bool showTargetFollowParams = false;
     private bool showTargetLookParams = false;
     private bool showOcclusionAvoidanceParams = false;
@@ -26,7 +25,6 @@ public class CameraParamsInspector : Editor
         
         cameraParams = (CameraParams) target;
 
-        //DoTargetComponents(cameraController);
         DoCameraMode(cameraParams);
         DoTargetFollowing(cameraParams);
         DoTargetLook(cameraParams);
@@ -39,18 +37,6 @@ public class CameraParamsInspector : Editor
         EditorUtility.SetDirty(target);
     }
 
-    /*
-    private void DoTargetComponents(CameraParams t)
-    {
-        showTargetComponents = FoldoutHeader(showTargetComponents, "Follow/look targets");
-        if(showTargetComponents)
-        {
-            t.followTarget = (GameObject) ObjectField("Follow target", t.followTarget, typeof(GameObject), true);
-            t.lookAtTarget = (GameObject) ObjectField("Look target", t.lookAtTarget, typeof(GameObject), true);
-        }
-    }
-    */
-
     private void DoCameraMode(CameraParams t)
     {
         showCameraModeParams = FoldoutHeader(showCameraModeParams, "Camera behaviour mode");
@@ -60,8 +46,8 @@ public class CameraParamsInspector : Editor
 
             if(t.camMode == CameraBehaviourMode.FollowAndOrbit)
             {
-                //t.orbitToFollowTransitionDelay = FloatField("Orbit to follow transition delay", t.orbitToFollowTransitionDelay);
-                t.orbitToFollowTransitionSpeed = FloatField("Orbit to follow transition speed", t.orbitToFollowTransitionSpeed);
+                t.orbitToFollowHoldTime = FloatField("Transition delay", t.orbitToFollowHoldTime);
+                t.orbitToFollowTransitionTime = FloatField("Transition time", t.orbitToFollowTransitionTime);
             }
         }
     }
@@ -89,15 +75,16 @@ public class CameraParamsInspector : Editor
             if (t.allowMoveTowardsCamera)
             {
                 t.desiredFrontOffset = Vector3Field("Desired front offset", t.desiredFrontOffset);
+                t.movingTowardsCameraAngleRange = Slider("Angle range", t.movingTowardsCameraAngleRange, 0, 90);
             }
 
 
             //t.followHeightMode = (ThirdPersonCameraController.FollowHeightMode) EnumPopup("Follow height mode", t.followHeightMode);
             //t.minOffset = Vector3Field("Min offset", t.minOffset); //not currently used
             //t.maxOffset = Vector3Field("Max offset", t.maxOffset); //not currently used
-            t.interpolateTargetFollowing = Toggle("Interpolate", t.interpolateTargetFollowing);
+            t.interpolateTargetFollow = Toggle("Interpolate", t.interpolateTargetFollow);
             
-            if(t.interpolateTargetFollowing)
+            if(t.interpolateTargetFollow)
             {
                 t.followSpeed = FloatField("Follow speed", t.followSpeed);
             }
