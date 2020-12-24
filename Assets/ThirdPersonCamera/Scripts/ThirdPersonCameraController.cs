@@ -23,11 +23,13 @@ namespace ThirdPersonCamera
         private CameraParams camParams;
         #endregion
 
+        /* Private variables */
+        private float virtualCameraSphereRadius;
+        
         #region counters/trackers
         private Vector2 currentOrbitAngles = Vector2.zero;
-        private float currentTimeInOcclusionMult = 0f;
+        private float timeInOcclusionRamp = 0f;
         private Vector3[] previousTargetPositions;
-        private float virtualCameraSphereRadius;
         #endregion
 
         private void Awake()
@@ -44,31 +46,26 @@ namespace ThirdPersonCamera
         //all camera movement is done here
         private void FixedUpdate()
         {
-            virtualCameraSphereRadius = cam.GetNearClipPaneCentreToCornerDistance(); //update virtual size in case fov, clip pane distance etc. changed
             UpdateConvenienceComponentVars();
-            UpdateOcclusionEaseInOutCounters(Time.fixedDeltaTime);
+            UpdateOcclusionTimeRamp(Time.fixedDeltaTime);
+            UpdateCurrentOrbitAngles();
+            //Debug.Log("current orbit angles = " + currentOrbitAngles);
+            virtualCameraSphereRadius = cam.GetNearClipPaneCentreToCornerDistance(); //update virtual size in case fov, clip pane distance etc. changed
             stateController.UpdateCameraState();
 
-            Vector3 initialClipPanePos = cam.GetNearClipPaneCentreWorld(); //cache camera's near clip pane centre before any movement for collision avoidance
 
-            if (stateController.GetCameraState() == CameraState.OrbitingTarget)
-            {
-                currentOrbitAngles = GetNewOrbitAngles(currentOrbitAngles, input.GetOrbitInput());
-            }
-            else
-            {
-                currentOrbitAngles = new Vector2(cam.transform.eulerAngles.y, cam.transform.eulerAngles.x);
-            }
-            //Debug.Log("current orbit angles = " + currentOrbitAngles);
+            Vector3 initialClipPanePos = cam.GetNearClipPaneCentreWorld(); //cache camera's near clip pane centre before any movement for collision avoidance
 
             switch (stateController.GetCameraState())
             {
                 case CameraState.FollowingTarget:
+                    cam.transform.position = GetFollowPosition(GetDesiredFollowPosition(camParams.desiredOffset), camParams.followSpeed + GetOcclusionFollowSpeedIncrease(), Time.fixedDeltaTime);
+                    break;
                 case CameraState.TargetMovingTowardsCamera:
-                    cam.transform.position = GetFollowPosition(stateController.GetCameraState(), Time.fixedDeltaTime);
+                    cam.transform.position = GetFollowPosition(GetDesiredFollowPosition(camParams.desiredFrontOffset), camParams.frontFollowSpeed + GetOcclusionFollowSpeedIncrease(), Time.fixedDeltaTime);
                     break;
                 case CameraState.OrbitingTarget:
-                    cam.transform.position = OrbitTarget(GetDesiredOrbitPositionFromAngles(currentOrbitAngles), Time.fixedDeltaTime);
+                    cam.transform.position = GetNewOrbitPosition(GetDesiredOrbitPositionFromAngles(currentOrbitAngles), Time.fixedDeltaTime);
                     break;
                 case CameraState.OrbitToFollow_HoldingOrbitAngle:
                     //TODO: Hold orbit angle
@@ -80,52 +77,80 @@ namespace ThirdPersonCamera
             }
 
             if (camParams.useCamWhiskers) cam.transform.position = GetCamWhiskerResult(cam.transform.position, GetCamWhiskerOffset(), Time.fixedDeltaTime);
-            if (camParams.avoidFollowTargetOcclusion) cam.transform.position = GetOcclusionAvoidResult(Time.fixedDeltaTime);
+            if (camParams.avoidFollowTargetOcclusion) cam.transform.position = GetOcclusionPullInResult(Time.fixedDeltaTime);
             cam.transform.rotation = LookAtTarget(cam, Time.fixedDeltaTime);
-            if (camParams.avoidCollisionWithGeometry) cam.transform.position = AvoidCollisions(initialClipPanePos, cam, followTarget.transform.position);
+            if (camParams.avoidCollisionWithGeometry) cam.transform.position = AvoidCollisions(initialClipPanePos, cam);
             if (camParams.useMaxDistance) cam.transform.position = ClampCameraMaxDistance(cam);
         }
 
+        
         #region follow target
-        //Returns the camera position after interpolating between the current camera position and the desired follow position, 
-        //shortening the desired follow offset if it would be occluded
-        private Vector3 GetFollowPosition(CameraState state, float deltaTime)
+        ///<summary>
+        ///Returns the camera position after interpolating between the current camera position and the desired follow position, 
+        ///shortening the desired follow offset if it would be occluded. This is the same for both rear follow and front follow ("target moving towards camera" state, if using)
+        ///</summary>
+        ///<param name="state">The current camera state.</param>
+        ///<param name="deltaTime">Time since the last camera update.</param>
+        ///<returns>The camera's new follow position.</returns>
+        private Vector3 GetFollowPosition(Vector3 desiredPos, float followSpeed, float deltaTime)
         {
-            Vector3 desiredPos = GetDesiredCamPosition(state);
             Debug.DrawLine(cam.transform.position, desiredPos, Color.red);
 
             Vector3 newCamPos = camParams.avoidFollowTargetOcclusion ? ShortenFollowDistanceToAvoidRearCollision(desiredPos) : desiredPos;
             Debug.DrawLine(cam.transform.position, newCamPos, Color.yellow);
 
-            if (camParams.useTimeInOcclusionMultiplier && currentTimeInOcclusionMult > 0)
+            if(camParams.interpolateTargetFollow)
             {
-                if(camParams.interpolateTargetFollow)
+                return Smoothstep(cam.transform.position, newCamPos, deltaTime * followSpeed);
+            }
+            else
+            {
+                return newCamPos;
+            }
+        }
+
+        private Vector3 GetDesiredFollowPosition(Vector3 desiredOffset)
+        {
+            if (camParams.useWorldSpaceOffset)
+            {
+                return followTarget.transform.position + desiredOffset;
+            }
+            else
+            {
+                return followTarget.transform.position + followTarget.transform.TransformDirection(desiredOffset);
+            }
+        }
+
+        /// <summary>
+        /// Returns the camera's follow speed multiplier
+        /// </summary>
+        /// <returns>Speed multiplier for target follow interpolation</returns>
+        private float GetFollowSpeed()
+        {
+            if (camParams.occlusionIncreaseFollowSpeedMultiplier > 0)
+            {
+                if(camParams.useTimeInOcclusionMultiplier && timeInOcclusionRamp > 0)
                 {
-                    float t = deltaTime * camParams.followSpeed * Mathf.Max(1, camParams.occlusionIncreaseFollowSpeedMultiplier * currentTimeInOcclusionMult);
-                    return Smoothstep(cam.transform.position, newCamPos, t);
+                    return camParams.followSpeed * Mathf.Max(1, camParams.occlusionIncreaseFollowSpeedMultiplier * timeInOcclusionRamp);
                 }
                 else
                 {
-                    return newCamPos;
+                    return camParams.followSpeed * Mathf.Max(1, camParams.occlusionIncreaseFollowSpeedMultiplier);
                 }
             }
             else
             {
-                if(camParams.interpolateTargetFollow)
-                {
-                    return Smoothstep(cam.transform.position, newCamPos, deltaTime * camParams.followSpeed);
-                }
-                else
-                {
-                    return newCamPos;
-                }
+                return camParams.followSpeed;
             }
         }
         #endregion
 
         #region collision avoidance
-        //Avoids camera clipping with geometry by jumping the camera forward if any of its near clip pane corners are inside geometry
-        private Vector3 AvoidCollisions(Vector3 initialNearClipPanePos, Camera updatedCam, Vector3 followTargetPos)
+        /// <summary>Avoids camera clipping with geometry by jumping the camera towards the follow target if a collision is detected.</summary>
+        /// <param name="initialNearClipPanePos">The camera's near clip pane centre point at the start of the update tick.</param>
+        /// <param name="updatedCam">The camera after other movement has been applied.</param>
+        /// <returns>The new camera position after collision avoidance has been applied.</returns>
+        private Vector3 AvoidCollisions(Vector3 initialNearClipPanePos, Camera updatedCam)
         {
             //!!!!
             //BIG TODO: This function fails when the sphere cast checks' (both the one in GetCollidersBetweenCameraPositions and the inner sphere checks that begin from followTargetPos)
@@ -135,8 +160,9 @@ namespace ThirdPersonCamera
             //Possible solution - https://forum.unity.com/threads/analyzing-and-optimizing-unity-sphere-capsule-casts.233328/
             //!!!!
 
+            Vector3 followTargetPos = followTarget.transform.position;
+            
             //Check if the camera's virtual size sphere is intersecting with geometry
-            //HashSet<Collider> overlapSphereColliders = new HashSet<Collider>(Physics.OverlapSphere(updatedCam.GetNearClipPaneCentreWorld(), virtualCameraSphereRadius, camParams.colliderLayerMask));
             HashSet<Collider> overlapSphereColliders = GetCollidersBetweenCameraPositions(initialNearClipPanePos, updatedCam.GetNearClipPaneCentreWorld());
             if (overlapSphereColliders.Count > 0) //If so, cast a sphere back from follow target to camera's near clip pane
             {
@@ -172,9 +198,12 @@ namespace ThirdPersonCamera
             return updatedCam.transform.position;
         }
 
-        //Returns colliders between two camera positions as a HashSet, using the camera's virtual size to sphere cast.
-        //Intended use is to detect collisions by casting between the camera near clip position at the start of the update tick and its position after all movement
-        //except collision avoidance has been applied
+        ///<summary>
+        ///Returns colliders between two camera positions as a HashSet, using the camera's virtual size to sphere cast.
+        ///Intended use is to detect collisions by casting between the camera near clip position at the start of the update tick and its position after all movement
+        ///except collision avoidance has been applied.
+        ///</summary>
+        ///<returns>All colliders hit by the sphere cast.</returns>
         private HashSet<Collider> GetCollidersBetweenCameraPositions(Vector3 initialNearClipPane, Vector3 updatedNearClipPane)
         {
             //debug drawing
@@ -221,10 +250,10 @@ namespace ThirdPersonCamera
         #endregion
 
         #region occlusion
-        //Takes the desired camera position and adjusts it so the follow target isn't occluded by objects in the scene.
-        //If the follow target would be occluded if the camera moved to desiredPos, this function moves desiredPos towards the follow target.
-        //If there are no occluders in the way of the desired position, returns desiredPos unmodified
-        private Vector3 GetOcclusionAvoidResult(float deltaTime)
+        /// <summary> Pulls the camera towards the follow target if the follow target is occluded by geometry.</summary>
+        /// <param name="deltaTime">Time since the last camera update.</param>
+        /// <returns>The closer camera position if occluded, the current camera position if not.</returns>
+        private Vector3 GetOcclusionPullInResult(float deltaTime)
         {
             Vector3 camPos = cam.transform.position;
             float maxDistance = Vector3.Distance(followTarget.transform.position, camPos);
@@ -232,49 +261,92 @@ namespace ThirdPersonCamera
             if (IsOccluded(camParams.occlusionClipPanePadding))
             {
                 Debug.DrawRay(camPos, (followTarget.transform.position - camPos).normalized * maxDistance, Color.cyan);
-                return PullInCamera(camPos, camParams.occlusionPullInSpeedVertical, camParams.occlusionPullInSpeedHorizontal, deltaTime);
+                float timeInOcclusionMult = GetTimeInOcclusionMultiplier();
+                return PullInCamera(camPos, camParams.occlusionPullInSpeedVertical * timeInOcclusionMult, camParams.occlusionPullInSpeedHorizontal * timeInOcclusionMult, deltaTime);
             }
 
             return camPos;
         }
 
+        /// <summary>
+        /// Gets the follow speed increase for when the target is occluded, if using it. Also takes into account time in occlusion multiplier, if using.
+        /// </summary>
+        /// <returns>The occlusion follow speed increase (potentially multiplier by the time-in-occlusion ramp); 0 if target is not occluded.</returns>
+        private float GetOcclusionFollowSpeedIncrease()
+        {
+            if (IsOccluded(camParams.occlusionClipPanePadding))
+            {
+                return camParams.occlusionIncreaseFollowSpeedMultiplier * GetTimeInOcclusionMultiplier();
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+
+
+        /// <summary>Checks whether the camera's view of the target is occluded by level geometry by casting rays towards the target from each corner of the camera's near clip pane.</summary>
+        /// <param name="clipPanePadding">Adds virtual padding to the camera's near clip pane size when casting rays. 0: actual near clip pane size; >0: increased clip pane size</param>
+        /// <returns>True if the follow target is occluded by geometry on the occluder layer(s)</returns>
         private bool IsOccluded(float clipPanePadding = 0f)
         {
             Vector3 dir = followTarget.transform.position - cam.transform.position;
 
-            //Debug drawing
-            //foreach (Vector3 clipPaneCorner in cam.GetNearClipPaneCornersWorld(clipPanePadding)) Debug.DrawRay(clipPaneCorner, dir, Color.white);
-            
             //? if(Physics.BoxCast(camPos, cam.GetNearClipPaneHalfExtents(), followTarget.transform.position - camPos, Quaternion.LookRotation(cam.transform.forward, Vector3.up), maxDistance, occluderLayers)) ...
             return cam.RaycastsFromNearClipPane(dir, out _, dir.magnitude, camParams.occluderLayerMask, clipPanePadding);
         }
 
-        private void UpdateOcclusionEaseInOutCounters(float deltaTime)
+        /// <summary>Gets the occlusion speed multiplier for time-in-occlusion speed ramp. If not using, returns 1. </summary>
+        private float GetTimeInOcclusionMultiplier()
         {
-            if (IsOccluded(camParams.occlusionClipPanePadding) && camParams.useTimeInOcclusionMultiplier)
+            return camParams.useTimeInOcclusionMultiplier ? timeInOcclusionRamp : 1f;
+        }
+
+        /// <summary>
+        /// Updates the time-in-occlusion speed increase ramp variable. Note that this value is not the actual time spent in occlusion;
+        /// it represents a ramp up/down value which increases up to a maximum the longer the target is occluded, and begins decreasing when the target
+        /// is no longer occluded. For this reason, it never goes below 1 (since we don't want the follow speed to decrease when out of occlusion)
+        /// and never goes above the max value set in the camera params.
+        /// </summary>
+        /// <param name="deltaTime">Time since the last update tick.</param>
+        private void UpdateOcclusionTimeRamp(float deltaTime)
+        {
+            if (camParams.useTimeInOcclusionMultiplier)
             {
-                currentTimeInOcclusionMult = Mathf.Min(currentTimeInOcclusionMult + deltaTime * camParams.timeInOcclusionRampUpSpeed, camParams.maxTimeInOcclusionMultiplier);
+                if (IsOccluded(camParams.occlusionClipPanePadding))
+                {
+                    timeInOcclusionRamp = Mathf.Min(timeInOcclusionRamp + deltaTime * camParams.timeInOcclusionRampUpSpeed, camParams.maxTimeInOcclusionMultiplier);
+                }
+                else
+                {
+                    timeInOcclusionRamp = Mathf.Max(timeInOcclusionRamp - deltaTime * camParams.timeInOcclusionRampDownSpeed, 1f);
+                }
             }
             else
             {
-                currentTimeInOcclusionMult = Mathf.Max(currentTimeInOcclusionMult - deltaTime * camParams.timeInOcclusionRampDownSpeed, 0f);
+                timeInOcclusionRamp = 1;
             }
+            
         }
         #endregion
 
         #region orbit
+        /// <summary>Calculates new orbit angles based on the current angles and the orbit input.</summary>
         private Vector2 GetNewOrbitAngles(Vector2 currAngles, Vector2 orbitInput)
         {
-            return new Vector2(ClampOrbitAngle(currAngles.x + orbitInput.x), Mathf.Clamp(currAngles.y + orbitInput.y, camParams.minOrbitYAngle, camParams.maxOrbitYAngle));
+            return new Vector2(ClampOrbitAngle360(currAngles.x + orbitInput.x), Mathf.Clamp(currAngles.y + orbitInput.y, camParams.minOrbitYAngle, camParams.maxOrbitYAngle));
         }
 
-        private float ClampOrbitAngle(float angle)
+        /// <summary>Clamps an angle to within 360 degrees.</summary>
+        private float ClampOrbitAngle360(float angle)
         {
             if (angle < -360) return angle + 360;
             if (angle >= 360) return angle - 360;
             return angle;
         }
 
+        /// <summary>Finds the camera's desired orbit position from its orbit angles.</summary>
         private Vector3 GetDesiredOrbitPositionFromAngles(Vector2 orbitAngles)
         {
             Quaternion rotation = Quaternion.Euler(orbitAngles.y, orbitAngles.x, 0f);
@@ -282,13 +354,35 @@ namespace ThirdPersonCamera
             return followTarget.transform.position + rotation * camParams.desiredOffset;
         }
 
-        private Vector3 OrbitTarget(Vector3 desiredPos, float deltaTime)
+        /// <summary>Interpolates between the camera's current position and the desired orbit position to find the camera's new orbit position.</summary>
+        /// <param name="desiredPos">The desired orbit position</param>
+        /// <param name="deltaTime">Time since the last camera update</param>
+        /// <returns>The camera's new orbit position.</returns>
+        private Vector3 GetNewOrbitPosition(Vector3 desiredPos, float deltaTime)
         {
             return Vector3.Lerp(cam.transform.position, camParams.avoidFollowTargetOcclusion ? ShortenFollowDistanceToAvoidRearCollision(desiredPos) : desiredPos, deltaTime * camParams.orbitSpeed);
+        }
+
+        /// <summary>Updates the current orbit angles tracker based on the current camera state.</summary>
+        private void UpdateCurrentOrbitAngles()
+        {
+            if (stateController.GetCameraState() == CameraState.OrbitingTarget)
+            {
+                currentOrbitAngles = GetNewOrbitAngles(currentOrbitAngles, input.GetOrbitInput());
+            }
+            else
+            {
+                currentOrbitAngles = new Vector2(cam.transform.eulerAngles.y, cam.transform.eulerAngles.x);
+            }
         }
         #endregion
 
         #region transition from orbit to follow
+        private Vector3 GetDesiredOrbitToFollowHoldPosition()
+        {
+            throw new System.NotImplementedException();
+        }
+
         private Vector3 GetDesiredTransitionFromOrbitToFollowPosition()
         {
             //TODO: check for moving towards camera here, so it can smoothly transition to that? (instead of just jumping out of the transition state, as it currently does)
@@ -301,13 +395,22 @@ namespace ThirdPersonCamera
         #endregion
 
         #region look at target
-        //Returns the rotation which will make the camera look at the lookAtTarget
+        /// <summary>
+        /// Finds the rotation which will make the camera look at the look target (+ desired offset, if any)
+        /// </summary>
+        /// <returns>The desired look-at-target rotation</returns>
         private Quaternion GetDesiredLookAtTargetRotation()
         {
             Transform lookAtTransform = lookAtTarget.transform;
             return Quaternion.LookRotation((lookAtTransform.position + new Vector3(lookAtTransform.right.x, 0f, lookAtTransform.right.z).normalized * camParams.lookOffset) - cam.transform.position);
         }
 
+        /// <summary>
+        /// Calculates the camera's new look-at rotation.
+        /// </summary>
+        /// <param name="cam">The current camera</param>
+        /// <param name="deltaTime">Time since the last camera update</param>
+        /// <returns>The camera's new look-at-target rotation. If this is not interpolated, it will be the same as the desired look-at rotation</returns>
         private Quaternion LookAtTarget(Camera cam, float deltaTime)
         {
             if (camParams.interpolateTargetLookAt)
@@ -322,8 +425,12 @@ namespace ThirdPersonCamera
         #endregion
 
         #region general
-        //Returns the desired target follow/orbit position based on the current camera state.
-        //This is the "ideal" position the camera wants to be in, before taking into consideration obstacle/occlusion avoidance etc.
+        /// <summary>
+        /// Returns the desired camera position based on the camera state.
+        /// This is the "ideal" position the camera wants to be in, before taking into consideration obstacle/occlusion avoidance etc. 
+        /// </summary>
+        /// <param name="state">The current camera state.</param>
+        /// <returns>The desired camera position based on the input camera state</returns>
         private Vector3 GetDesiredCamPosition(CameraState state)
         {
             switch (state)
@@ -331,31 +438,22 @@ namespace ThirdPersonCamera
                 case CameraState.OrbitingTarget:
                     return GetDesiredOrbitPositionFromAngles(currentOrbitAngles);
                 case CameraState.TargetMovingTowardsCamera:
-                    if (camParams.useWorldSpaceOffset)
-                    {
-                        return followTarget.transform.position + camParams.desiredFrontOffset;
-                    }
-                    else
-                    {
-                        return followTarget.transform.position + followTarget.transform.TransformDirection(camParams.desiredFrontOffset);
-                    }
+                    return GetDesiredFollowPosition(camParams.desiredFrontOffset);
                 case CameraState.OrbitToFollow_HoldingOrbitAngle:
                     return GetDesiredOrbitPositionFromAngles(currentOrbitAngles); //hold orbit angles - state system won't allow updating them in this state
                 case CameraState.OrbitToFollow_Transitioning:
                     return GetDesiredTransitionFromOrbitToFollowPosition();
                 case CameraState.FollowingTarget:
                 default:
-                    if (camParams.useWorldSpaceOffset)
-                    {
-                        return followTarget.transform.position + camParams.desiredOffset;
-                    }
-                    else
-                    {
-                        return followTarget.transform.position + followTarget.transform.TransformDirection(camParams.desiredOffset);
-                    }
+                    return GetDesiredFollowPosition(camParams.desiredOffset);
             }
         }
 
+
+
+        /// <summary>Clamps the camera to its maximum distance from its target, as defined in the cam controller parameters.</summary>
+        /// <param name="cam">The current camera.</param>
+        /// <returns>The distance-clamped camera position.</returns>
         private Vector3 ClampCameraMaxDistance(Camera cam)
         {
             Vector3 followTargetToCam = cam.transform.position - followTarget.transform.position;
@@ -367,16 +465,28 @@ namespace ThirdPersonCamera
             return cam.transform.position;
         }
 
-        private Vector3 PullInCamera(Vector3 camPos, float speedY, float speedXZ, float deltaTime)
+        /// <summary>Smoothly pulls the camera towards its follow target.</summary>
+        /// <param name="camPos">The current camera position.</param>
+        /// <param name="verticalSpeed">Speed to pull the camera to the target on the vertical (y) axis.</param>
+        /// <param name="horizontalSpeed">Speed to pull the camera to the target on the horizontal (x, z) axes.</param>
+        /// <param name="deltaTime">Time since the last camera update.</param>
+        /// <returns>Camera position after moving towards target</returns>
+        private Vector3 PullInCamera(Vector3 camPos, float verticalSpeed, float horizontalSpeed, float deltaTime)
         {
             Vector3 targetPos = followTarget.transform.position;
-            float newX = Mathf.SmoothStep(camPos.x, targetPos.x, speedXZ * deltaTime);
-            float newY = Mathf.SmoothStep(camPos.y, targetPos.y, speedY * deltaTime);
-            float newZ = Mathf.SmoothStep(camPos.z, targetPos.z, speedXZ * deltaTime);
+            float newX = Mathf.SmoothStep(camPos.x, targetPos.x, horizontalSpeed * deltaTime);
+            float newY = Mathf.SmoothStep(camPos.y, targetPos.y, verticalSpeed * deltaTime);
+            float newZ = Mathf.SmoothStep(camPos.z, targetPos.z, horizontalSpeed * deltaTime);
 
             return new Vector3(newX, newY, newZ);
         }
 
+        /// <summary>
+        /// Checks if the desired camera position would cause the camera to intersect with geometry to the rear;  
+        /// if so, shortens the distance between the desired camera position and the target to avoid this  
+        /// </summary>
+        /// <param name="desiredPos">The desired camera position.</param>
+        /// <returns>The closer camera position if an intersection was found, else the input position</returns>
         private Vector3 ShortenFollowDistanceToAvoidRearCollision(Vector3 desiredPos)
         {
             Vector3 desiredDir = desiredPos - followTarget.transform.position;
@@ -401,6 +511,9 @@ namespace ThirdPersonCamera
         #endregion
 
         #region utility
+        /// <summary>
+        /// Updates convenience references to the camera controller's follow/look targets and its parameter object
+        /// </summary>
         private void UpdateConvenienceComponentVars()
         {
             followTarget = components.followTarget;

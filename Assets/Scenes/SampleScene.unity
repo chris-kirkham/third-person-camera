@@ -4180,7 +4180,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7e43e4f9bd40dc40b7176ec0369bacb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  invertY: 0
+  invertY: 1
   useOrbitInputSmoothing: 1
   smoothingSharpness: 100
 --- !u!114 &963194231

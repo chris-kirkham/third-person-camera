@@ -75,6 +75,7 @@ public class CameraParamsInspector : Editor
             if (t.allowMoveTowardsCamera)
             {
                 t.desiredFrontOffset = Vector3Field("Desired front offset", t.desiredFrontOffset);
+                t.frontFollowSpeed = FloatField("Front follow speed", t.frontFollowSpeed);
                 t.movingTowardsCameraAngleRange = Slider("Angle range", t.movingTowardsCameraAngleRange, 0, 90);
             }
 

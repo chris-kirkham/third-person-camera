@@ -16,20 +16,29 @@ namespace ThirdPersonCamera
 
         #region target follow parameters
         [Header("Target following")]
+        //rear offset
         public Vector3 desiredOffset = Vector3.back;
-        public bool useMaxDistance = true;
-        public float maxDistanceFromTarget = 10f; 
-        public bool useWorldSpaceOffset = false; //false = transform offset to follow target's local space
+        public float followSpeed = 1f;
+
+        //front offset, for moving towards camera
         public bool allowMoveTowardsCamera = true;
-        [Range(0, 90)] public float movingTowardsCameraAngleRange = 15f;
         public Vector3 desiredFrontOffset = Vector3.forward;
+        public float frontFollowSpeed = 1f;
+        [Range(0, 90)] public float movingTowardsCameraAngleRange = 15f;
+
+        //use world space offset (rear and front follow)
+        public bool useWorldSpaceOffset = false; //false = transform offset to follow target's local space
+
+        //max follow distance
+        public bool useMaxDistance = true;
+        public float maxDistanceFromTarget = 10f;
+        //public Vector3 minOffset = Vector3.back;
+        //public Vector3 maxOffset = Vector3.back;
+
         public enum FollowHeightMode { AboveTarget, AboveGround };
         public FollowHeightMode followHeightMode = FollowHeightMode.AboveTarget; //TODO: IMPLEMENT
 
-        //public Vector3 minOffset = Vector3.back;
-        //public Vector3 maxOffset = Vector3.back;
         public bool interpolateTargetFollow = true;
-        public float followSpeed = 1f;
         #endregion
 
         #region target look parameters
@@ -48,7 +57,7 @@ namespace ThirdPersonCamera
         public float occlusionClipPanePadding = 0f;
         //public bool preserveCameraHeight = true;
 
-        //parameters for easing in/out of occlusion avoidance speedups
+        //parameters for ramping up/down occlusion avoidance speedups based on how long the target has been occluded
         public bool useTimeInOcclusionMultiplier = true;
         public float maxTimeInOcclusionMultiplier = 10f;
         public float timeInOcclusionRampUpSpeed = 1f;
