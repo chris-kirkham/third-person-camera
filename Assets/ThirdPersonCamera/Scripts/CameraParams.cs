@@ -53,7 +53,7 @@ namespace ThirdPersonCamera
         public bool avoidFollowTargetOcclusion = true;
         public float occlusionPullInSpeedHorizontal = 1f;
         public float occlusionPullInSpeedVertical = 1f;
-        public float occlusionIncreaseFollowSpeedMultiplier = 1f;
+        public float occlusionFollowSpeedIncrease = 1f;
         public float occlusionClipPanePadding = 0f;
         //public bool preserveCameraHeight = true;
 

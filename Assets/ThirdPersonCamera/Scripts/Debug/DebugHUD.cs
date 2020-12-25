@@ -21,7 +21,7 @@ namespace ThirdPersonCamera
         private TextMeshProUGUI headerText;
         private TextMeshProUGUI positionText;
         private TextMeshProUGUI stateText;
-        private TextMeshProUGUI inputText;
+        private TextMeshProUGUI orbitText;
 
         private void Awake()
         {
@@ -29,7 +29,7 @@ namespace ThirdPersonCamera
             headerText = transform.GetChild(0).GetComponent<TextMeshProUGUI>();
             positionText = transform.GetChild(1).GetComponent<TextMeshProUGUI>(); 
             stateText = transform.GetChild(2).GetComponent<TextMeshProUGUI>(); 
-            inputText = transform.GetChild(3).GetComponent<TextMeshProUGUI>(); 
+            orbitText = transform.GetChild(3).GetComponent<TextMeshProUGUI>(); 
         }
 
         // Update is called once per frame
@@ -38,7 +38,7 @@ namespace ThirdPersonCamera
             headerText.text = "Camera: " + cam.name;
             positionText.text = "Position: " + cam.transform.position.ToString();
             stateText.text = "State: " + stateController.GetCameraState().ToString();
-            inputText.text = "Orbit input: " + camInput.GetOrbitInput().ToString();
+            orbitText.text = "Orbit input: " + camInput.GetOrbitInput().ToString();
         }
     }
 }

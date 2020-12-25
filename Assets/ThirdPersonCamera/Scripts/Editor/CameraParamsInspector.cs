@@ -117,13 +117,13 @@ public class CameraParamsInspector : Editor
                 t.usePreviousTargetPositionsForCameraPullIn = Toggle("Follow previous target positions for pull-in", t.usePreviousTargetPositionsForCameraPullIn);
                 t.occlusionPullInSpeedHorizontal = FloatField("Pull-in speed horizontal", t.occlusionPullInSpeedHorizontal);
                 t.occlusionPullInSpeedVertical = FloatField("Pull-in speed vertical", t.occlusionPullInSpeedVertical);
-                t.occlusionIncreaseFollowSpeedMultiplier = FloatField("Increase follow speed", t.occlusionIncreaseFollowSpeedMultiplier);
+                t.occlusionFollowSpeedIncrease = FloatField("Increase follow speed", t.occlusionFollowSpeedIncrease);
                 t.occlusionClipPanePadding = FloatField("Near clip pane padding", t.occlusionClipPanePadding);
                 //t.preserveCameraHeight = Toggle("Preserve camera height", t.preserveCameraHeight);
                 t.useTimeInOcclusionMultiplier = Toggle("Ease in/out of occlusion avoidance", t.useTimeInOcclusionMultiplier);
                 if(t.useTimeInOcclusionMultiplier)
                 {
-                    t.maxTimeInOcclusionMultiplier = FloatField("Max ease in/out speed multiplier", t.maxTimeInOcclusionMultiplier);
+                    t.maxTimeInOcclusionMultiplier = FloatField("Max speed increase", t.maxTimeInOcclusionMultiplier);
                     t.timeInOcclusionRampUpSpeed = FloatField("Ease in speed", t.timeInOcclusionRampUpSpeed);
                     t.timeInOcclusionRampDownSpeed = FloatField("Ease out speed", t.timeInOcclusionRampDownSpeed);
                 }

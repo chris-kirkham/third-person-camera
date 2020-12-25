@@ -51,7 +51,25 @@ public static class Lerps
         return a + ((b - a) * t);
     }
 
+    public static Vector3 SmoothstepSeparateAxes(Vector3 a, Vector3 b, float tHorizontal, float tVertical)
+    {
+        return new Vector3
+        (
+            Smoothstep(a.x, b.x, tHorizontal),
+            Smoothstep(a.y, b.y, tVertical),
+            Smoothstep(a.z, b.z, tHorizontal)
+        );
+    }
 
+    public static Vector3 SmootherstepSeparateAxes(Vector3 a, Vector3 b, float tHorizontal, float tVertical)
+    {
+        return new Vector3
+        (
+            Smootherstep(a.x, b.x, tHorizontal),
+            Smootherstep(a.y, b.y, tVertical),
+            Smootherstep(a.z, b.z, tHorizontal)
+        );
+    }
 
     //Smoothdamp with different smooth times for each axis 
     public static Vector3 SmoothDampSeparateAxis
@@ -106,7 +124,6 @@ public static class Lerps
         float z = Mathf.SmoothDamp(current.z, target.z, ref currentVelocity.z, smoothTimeZ, Mathf.Infinity, deltaTime);
         return new Vector3(x, y, z);
     }
-
 
 
     /* QUATERNION */

@@ -29,8 +29,6 @@ namespace ThirdPersonCamera
             UpdateOrbitToFollowTransitionTimeCounter(Time.deltaTime);
         }
 
-
-
         public void UpdateCameraState()
         {
             switch(state)
@@ -89,7 +87,6 @@ namespace ThirdPersonCamera
                     }
                     else if(orbitToFollowTimeCounter <= 0)
                     {
-                        Debug.Log("State = " + state.ToString() + "; orbitToFollowTimeCounter = " + orbitToFollowTimeCounter);
                         state = CameraState.FollowingTarget;
                     }
                     break;
