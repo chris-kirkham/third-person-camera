@@ -15,6 +15,7 @@ namespace ThirdPersonCamera
         private CameraState state = CameraState.FollowingTarget;
         private float orbitToFollowDelayCounter = 0f;
         private float orbitToFollowTimeCounter = 0f;
+        private float orbitToFollowRampUpMultiplier = 0f;
 
         private void Start()
         {
@@ -140,6 +141,16 @@ namespace ThirdPersonCamera
             else //decrement counter
             {
                 orbitToFollowTimeCounter -= deltaTime;
+            }
+        }
+
+        private void UpdateOrbitToFollowTransitionRamp(float deltaTime)
+        {
+            if (state != CameraState.OrbitToFollow_Transitioning) //reset counter
+            {
+            }
+            else //decrement counter
+            {
             }
         }
 

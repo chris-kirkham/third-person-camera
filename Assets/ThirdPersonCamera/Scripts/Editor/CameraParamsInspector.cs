@@ -58,24 +58,22 @@ public class CameraParamsInspector : Editor
         if(showTargetFollowParams)
         {
             t.desiredOffset = Vector3Field("Desired offset", t.desiredOffset);
-            t.useMaxDistance = Toggle("Clamp camera distance from target", t.useMaxDistance);
-            
-            if(t.useMaxDistance)
+            if (t.interpolateTargetFollow)
             {
-                t.maxDistanceFromTarget = FloatField("Max distance", t.maxDistanceFromTarget);    
+                t.followSpeed = FloatField("Follow speed", t.followSpeed);
             }
-
+            
             t.useWorldSpaceOffset = Toggle(new GUIContent("Use world space offset?", "By default, the offset is relative to the follow target's local space." +
                 " Set this to true to use world space offset."), t.useWorldSpaceOffset);
 
             t.allowMoveTowardsCamera = Toggle(new GUIContent("Target can move towards camera?", "Use the desired front offset when the follow target is facing the camera. Typically," +
                                 "this is used to let the camera stay in front of the target when the target is moving towards it," +
-                                " rather than trying to reorient behind the target"), t.allowMoveTowardsCamera);
+                                " rather than trying to reorient behind the target."), t.allowMoveTowardsCamera);
             
             if (t.allowMoveTowardsCamera)
             {
                 t.desiredFrontOffset = Vector3Field("Desired front offset", t.desiredFrontOffset);
-                t.frontFollowSpeed = FloatField("Front follow speed", t.frontFollowSpeed);
+                if(t.interpolateTargetFollow) t.frontFollowSpeed = FloatField("Front follow speed", t.frontFollowSpeed);
                 t.movingTowardsCameraAngleRange = Slider("Angle range", t.movingTowardsCameraAngleRange, 0, 90);
             }
 
@@ -85,9 +83,10 @@ public class CameraParamsInspector : Editor
             //t.maxOffset = Vector3Field("Max offset", t.maxOffset); //not currently used
             t.interpolateTargetFollow = Toggle("Interpolate", t.interpolateTargetFollow);
             
-            if(t.interpolateTargetFollow)
+            t.useMaxDistance = Toggle("Clamp camera distance from target", t.useMaxDistance);
+            if (t.useMaxDistance)
             {
-                t.followSpeed = FloatField("Follow speed", t.followSpeed);
+                t.maxDistanceFromTarget = FloatField("Max distance", t.maxDistanceFromTarget);
             }
         }
     }

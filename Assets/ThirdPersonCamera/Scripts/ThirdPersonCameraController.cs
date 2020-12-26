@@ -27,7 +27,7 @@ namespace ThirdPersonCamera
         private float virtualCameraSphereRadius;
         
         private Vector2 currentOrbitAngles = Vector2.zero;
-        private float timeInOcclusionRamp = 0f;
+        private float timeInOcclusionMultiplier = 0f;
         private Vector3[] previousTargetPositions;
         #endregion
 
@@ -47,7 +47,7 @@ namespace ThirdPersonCamera
         {
             /* Update relevant vars */
             UpdateConvenienceComponentVars();
-            UpdateOcclusionTimeRamp(Time.fixedDeltaTime);
+            UpdateOcclusionTimeMultiplier(Time.fixedDeltaTime);
             UpdateCurrentOrbitAngles();
             virtualCameraSphereRadius = cam.GetNearClipPaneCentreToCornerDistance(); //update virtual size in case fov, clip pane distance etc. changed
             stateController.UpdateCameraState();
@@ -68,11 +68,9 @@ namespace ThirdPersonCamera
             switch (state)
             {
                 case CameraState.FollowingTarget:
-                    return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearCollision(GetDesiredFollowPosition(camParams.desiredOffset)),
-                        camParams.followSpeed * GetOcclusionFollowSpeedIncrease(), deltaTime);
+                    return GetFollowPosition(GetDesiredFollowPosition(camParams.desiredOffset), camParams.followSpeed, deltaTime);
                 case CameraState.TargetMovingTowardsCamera:
-                    return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearCollision(GetDesiredFollowPosition(camParams.desiredFrontOffset)),
-                        camParams.frontFollowSpeed * GetOcclusionFollowSpeedIncrease(), deltaTime);
+                    return GetFollowPosition(GetDesiredFollowPosition(camParams.desiredFrontOffset), camParams.frontFollowSpeed, deltaTime);
                 case CameraState.OrbitingTarget:
                     return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearCollision(GetDesiredOrbitPositionFromAngles(currentOrbitAngles)), camParams.orbitSpeed, deltaTime);
                 case CameraState.OrbitToFollow_HoldingOrbitAngle:
@@ -147,6 +145,18 @@ namespace ThirdPersonCamera
         #endregion              
 
         #region follow target
+        private Vector3 GetFollowPosition(Vector3 desiredPos, float followSpeed, float deltaTime)
+        {
+            if(camParams.interpolateTargetFollow)
+            {
+                return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearCollision(desiredPos), followSpeed + GetOcclusionFollowSpeedIncrease(), deltaTime);
+            }
+            else
+            {
+                return ShortenFollowDistanceToAvoidRearCollision(desiredPos);
+            }
+        }
+
         private Vector3 GetDesiredFollowPosition(Vector3 desiredOffset)
         {
             if (camParams.useWorldSpaceOffset)
@@ -156,29 +166,6 @@ namespace ThirdPersonCamera
             else
             {
                 return followTarget.transform.position + followTarget.transform.TransformDirection(desiredOffset);
-            }
-        }
-
-        /// <summary>
-        /// Returns the camera's follow speed multiplier
-        /// </summary>
-        /// <returns>Speed multiplier for target follow interpolation</returns>
-        private float GetFollowSpeed()
-        {
-            if (camParams.occlusionFollowSpeedIncrease > 0)
-            {
-                if(camParams.useTimeInOcclusionMultiplier && timeInOcclusionRamp > 0)
-                {
-                    return camParams.followSpeed * Mathf.Max(1, camParams.occlusionFollowSpeedIncrease * timeInOcclusionRamp);
-                }
-                else
-                {
-                    return camParams.followSpeed * Mathf.Max(1, camParams.occlusionFollowSpeedIncrease);
-                }
-            }
-            else
-            {
-                return camParams.followSpeed;
             }
         }
         #endregion
@@ -303,56 +290,59 @@ namespace ThirdPersonCamera
         private Vector3 GetOcclusionPullInResult(float deltaTime)
         {
             Vector3 camPos = cam.transform.position;
-            float maxDistance = Vector3.Distance(followTarget.transform.position, camPos);
 
-            if (IsOccluded(camParams.occlusionClipPanePadding))
+            if (camParams.useTimeInOcclusionMultiplier)
             {
-                Debug.DrawRay(camPos, (followTarget.transform.position - camPos).normalized * maxDistance, Color.cyan);
-                float timeInOcclusionMult = GetTimeInOcclusionMultiplier();
-                return PullInCamera(camPos, camParams.occlusionPullInSpeedVertical * timeInOcclusionMult, camParams.occlusionPullInSpeedHorizontal * timeInOcclusionMult, deltaTime);
+                return PullInCamera(camPos, camParams.occlusionPullInSpeedVertical * timeInOcclusionMultiplier, camParams.occlusionPullInSpeedHorizontal * timeInOcclusionMultiplier, deltaTime);
+            }
+            else if(IsOccluded())
+            {
+                return PullInCamera(camPos, camParams.occlusionPullInSpeedVertical, camParams.occlusionPullInSpeedHorizontal, deltaTime);
             }
 
             return camPos;
         }
 
         /// <summary>
-        /// Gets the follow speed increase from the base occlusion follow speed increase and the time-in-occlusion ramp.
+        /// Gets the occlusion follow speed increase, taking into account the time-in-occlusion multiplier, if using.
         /// </summary>
-        /// <returns>The occlusion follow speed increase. If the time-in-occlusion ramp is zero, speed increase will be zero.</returns>
+        /// <returns>The occlusion follow speed increase.</returns>
         private float GetOcclusionFollowSpeedIncrease()
         {
-            return camParams.occlusionFollowSpeedIncrease * GetTimeInOcclusionMultiplier();
-        }
+            if(camParams.useTimeInOcclusionMultiplier)
+            {
+                return camParams.occlusionFollowSpeedIncrease * timeInOcclusionMultiplier;
+            }
+            else if(IsOccluded())
+            {
+                return camParams.occlusionFollowSpeedIncrease;
+            }
 
-        /// <summary>Gets the occlusion speed multiplier for time-in-occlusion speed ramp. If not using, returns 1. </summary>
-        private float GetTimeInOcclusionMultiplier()
-        {
-            return camParams.useTimeInOcclusionMultiplier ? timeInOcclusionRamp : 1f;
+            return 0f;
         }
 
         /// <summary>
         /// Updates the time-in-occlusion speed increase ramp variable. Note that this value is not the actual time spent in occlusion;
         /// it represents a ramp up/down value which increases up to a maximum the longer the target is occluded, and begins decreasing when the target
-        /// is no longer occluded. For this reason, it never goes below 1 (since we don't want the follow speed to decrease when out of occlusion)
-        /// and never goes above the max value set in the camera params.
+        /// is no longer occluded. 
         /// </summary>
         /// <param name="deltaTime">Time since the last update tick.</param>
-        private void UpdateOcclusionTimeRamp(float deltaTime)
+        private void UpdateOcclusionTimeMultiplier(float deltaTime)
         {
             if (camParams.useTimeInOcclusionMultiplier)
             {
                 if (IsOccluded(camParams.occlusionClipPanePadding))
                 {
-                    timeInOcclusionRamp = Mathf.Min(timeInOcclusionRamp + deltaTime * camParams.timeInOcclusionRampUpSpeed, camParams.maxTimeInOcclusionMultiplier);
+                    timeInOcclusionMultiplier = Mathf.Min(timeInOcclusionMultiplier + deltaTime * camParams.timeInOcclusionRampUpSpeed, camParams.maxTimeInOcclusionMultiplier);
                 }
                 else
                 {
-                    timeInOcclusionRamp = Mathf.Max(timeInOcclusionRamp - deltaTime * camParams.timeInOcclusionRampDownSpeed, 1f);
+                    timeInOcclusionMultiplier = Mathf.Max(timeInOcclusionMultiplier - deltaTime * camParams.timeInOcclusionRampDownSpeed, 0f);
                 }
             }
             else
             {
-                timeInOcclusionRamp = 1;
+                timeInOcclusionMultiplier = 0f;
             }
         }
         #endregion
