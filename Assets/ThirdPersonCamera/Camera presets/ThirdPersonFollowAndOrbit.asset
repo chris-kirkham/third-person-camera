@@ -14,14 +14,16 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   camMode: 0
   orbitToFollowHoldTime: 4
-  orbitToFollowTransitionTime: 4
+  orbitToFollowTransitionSpeed: 10
   desiredOffset: {x: 0, y: 0, z: -3}
-  followSpeed: 2
+  followSpeed: 4
   allowMoveTowardsCamera: 1
   desiredFrontOffset: {x: 0, y: 0, z: 3}
-  frontFollowSpeed: 10
-  movingTowardsCameraAngleRange: 45
+  frontFollowSpeed: 16
+  movingTowardsCameraAngleRange: 30
   useWorldSpaceOffset: 0
+  useMinDistance: 0
+  minDistanceFromTarget: 2
   useMaxDistance: 1
   maxDistanceFromTarget: 3
   followHeightMode: 0
@@ -30,14 +32,14 @@ MonoBehaviour:
   interpolateTargetLookAt: 0
   targetLookAtLerpSpeed: 16
   avoidFollowTargetOcclusion: 1
-  occlusionPullInSpeedHorizontal: 1
-  occlusionPullInSpeedVertical: 1
-  occlusionFollowSpeedIncrease: 4
+  occlusionPullInSpeedHorizontal: 0
+  occlusionPullInSpeedVertical: 0
+  occlusionFollowSpeedIncrease: 16
   occlusionClipPanePadding: 0
   useTimeInOcclusionMultiplier: 1
-  maxTimeInOcclusionMultiplier: 8
+  maxTimeInOcclusionMultiplier: 4
   timeInOcclusionRampUpSpeed: 1
-  timeInOcclusionRampDownSpeed: 1
+  timeInOcclusionRampDownSpeed: 4
   useCamWhiskers: 0
   whiskerPushStrength: 1
   numWhiskers: 4
@@ -55,4 +57,4 @@ MonoBehaviour:
     m_Bits: 256
   colliderLayerMask:
     serializedVersion: 2
-    m_Bits: 256
+    m_Bits: 768

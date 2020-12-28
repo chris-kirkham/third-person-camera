@@ -50,8 +50,8 @@ namespace ThirdPersonCamera
                 orbitInput = Vector2.zero;
             }
 
-            rawOrbitInput = new Vector2(Input.GetAxis("Mouse X"), Input.GetAxis("Mouse Y"));
-            if (invertY) rawOrbitInput.y *= -1;
+            rawOrbitInput = new Vector2(Input.GetAxis("Mouse Y"), Input.GetAxis("Mouse X")); //swap x and y so x axis rotates horizontally and y rotates vertically
+            if (invertY) rawOrbitInput.x *= -1;
             orbitInput += rawOrbitInput * camParams.orbitSensitivity;
 
             OrbitAngleChanged = (orbitInput.x != 0 || orbitInput.y != 0);

@@ -27,6 +27,7 @@ namespace ThirdPersonCamera
         private float virtualCameraSphereRadius;
         
         private Vector2 currentOrbitAngles = Vector2.zero;
+        private Vector2 orbitHoldAngle = Vector2.zero;
         private float timeInOcclusionMultiplier = 0f;
         private Vector3[] previousTargetPositions;
         #endregion
@@ -47,55 +48,88 @@ namespace ThirdPersonCamera
         {
             /* Update relevant vars */
             UpdateConvenienceComponentVars();
+
+            stateController.UpdateCameraState();
+            stateController.UpdateTargetOrientationState();
+
             UpdateOcclusionTimeMultiplier(Time.fixedDeltaTime);
             UpdateCurrentOrbitAngles();
+            UpdateOrbitHoldAngles(stateController.GetCameraState());
+            Debug.Log("Current orbit angles: " + currentOrbitAngles + ", current Euler angles: " + (Vector2)cam.transform.eulerAngles);
             virtualCameraSphereRadius = cam.GetNearClipPaneCentreToCornerDistance(); //update virtual size in case fov, clip pane distance etc. changed
-            stateController.UpdateCameraState();
+            
             Vector3 initialClipPanePos = cam.GetNearClipPaneCentreWorld(); //cache camera's near clip pane centre before any movement for collision avoidance
 
             /* Move camera */
-            cam.transform.position = GetCameraMoveResult(stateController.GetCameraState(), Time.fixedDeltaTime);
+            cam.transform.position = GetCameraMoveResult(stateController.GetCameraState(), stateController.GetOrientationState(), Time.fixedDeltaTime);
+            if (camParams.useMinDistance) cam.transform.position = ClampCameraMinDistance();
             if (camParams.useCamWhiskers) cam.transform.position = GetCamWhiskerResult(cam.transform.position, GetCamWhiskerOffset(), Time.fixedDeltaTime);
             if (camParams.avoidFollowTargetOcclusion) cam.transform.position = GetOcclusionPullInResult(Time.fixedDeltaTime);
             cam.transform.rotation = LookAtTarget(cam, Time.fixedDeltaTime);
             if (camParams.avoidCollisionWithGeometry) cam.transform.position = AvoidCollisions(initialClipPanePos, cam);
-            if (camParams.useMaxDistance) cam.transform.position = ClampCameraMaxDistance(cam);
+            if (camParams.useMaxDistance) cam.transform.position = ClampCameraMaxDistance();
         }
 
         #region general
-        private Vector3 GetCameraMoveResult(CameraState state, float deltaTime)
+        private Vector3 GetCameraMoveResult(CameraState state, CameraTargetOrientationState targetOrientation, float deltaTime)
         {
+            Vector3 desiredOffset; //declared here as used in multiple switch cases
             switch (state)
             {
                 case CameraState.FollowingTarget:
-                    return GetFollowPosition(GetDesiredFollowPosition(camParams.desiredOffset), camParams.followSpeed, deltaTime);
-                case CameraState.TargetMovingTowardsCamera:
-                    return GetFollowPosition(GetDesiredFollowPosition(camParams.desiredFrontOffset), camParams.frontFollowSpeed, deltaTime);
+                    float followSpeed;
+                    if(targetOrientation == CameraTargetOrientationState.TowardsCamera && camParams.allowMoveTowardsCamera)
+                    {
+                        desiredOffset = camParams.desiredFrontOffset;
+                        followSpeed = camParams.frontFollowSpeed;
+                    }
+                    else
+                    {
+                        desiredOffset = camParams.desiredOffset;
+                        followSpeed = camParams.followSpeed;
+                    }
+                    return FollowTarget(GetDesiredFollowPosition(desiredOffset), followSpeed, deltaTime);
                 case CameraState.OrbitingTarget:
-                    return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearCollision(GetDesiredOrbitPositionFromAngles(currentOrbitAngles)), camParams.orbitSpeed, deltaTime);
+                    return OrbitTarget(currentOrbitAngles, deltaTime);
                 case CameraState.OrbitToFollow_HoldingOrbitAngle:
-                    //TODO: Hold orbit angle
-                    throw new System.NotImplementedException();
+                    return OrbitTarget(orbitHoldAngle, deltaTime);
                 case CameraState.OrbitToFollow_Transitioning:
                     //TODO: Transition from orbit position to follow position
-                    return GetDesiredTransitionFromOrbitToFollowPosition(GetDesiredFollowPosition(camParams.desiredOffset));
+                    desiredOffset = (targetOrientation == CameraTargetOrientationState.TowardsCamera) ? camParams.desiredFrontOffset : camParams.desiredOffset;
+                    return GetDesiredTransitionFromOrbitToFollowPosition(GetDesiredFollowPosition(desiredOffset), Time.fixedDeltaTime);
                 default:
                     return cam.transform.position;
+            }
+        }
+
+        //TODO: This produces jerky movement when running in circles, and causes collision avoidance to fail if you keep running towards the camera when it's backed into a wall
+        private Vector3 ClampCameraMinDistance()
+        {
+            Vector3 followTargetToCam = cam.transform.position - followTarget.transform.position;
+            if (followTargetToCam.magnitude < camParams.minDistanceFromTarget)
+            {
+                return followTarget.transform.position + (followTargetToCam.normalized * camParams.minDistanceFromTarget);
+            }
+            else
+            {
+                return cam.transform.position;
             }
         }
 
         /// <summary>Clamps the camera to its maximum distance from its target, as defined in the cam controller parameters.</summary>
         /// <param name="cam">The current camera.</param>
         /// <returns>The distance-clamped camera position.</returns>
-        private Vector3 ClampCameraMaxDistance(Camera cam)
+        private Vector3 ClampCameraMaxDistance()
         {
             Vector3 followTargetToCam = cam.transform.position - followTarget.transform.position;
             if (followTargetToCam.magnitude > camParams.maxDistanceFromTarget)
             {
-                return followTarget.transform.position + followTargetToCam.normalized * camParams.maxDistanceFromTarget;
+                return followTarget.transform.position + (followTargetToCam.normalized * camParams.maxDistanceFromTarget);
             }
-
-            return cam.transform.position;
+            else
+            {
+                return cam.transform.position;
+            }
         }
 
         /// <summary>Smoothly pulls the camera towards its follow target.</summary>
@@ -120,10 +154,10 @@ namespace ThirdPersonCamera
         /// </summary>
         /// <param name="desiredPos">The desired camera position.</param>
         /// <returns>The closer camera position if an intersection was found, else the input position</returns>
-        private Vector3 ShortenFollowDistanceToAvoidRearCollision(Vector3 desiredPos)
+        private Vector3 ShortenFollowDistanceToAvoidRearOcclusion(Vector3 desiredPos)
         {
             Vector3 desiredDir = desiredPos - followTarget.transform.position;
-            if (Physics.SphereCast(followTarget.transform.position, virtualCameraSphereRadius, desiredDir, out RaycastHit hit, desiredDir.magnitude, camParams.colliderLayerMask))
+            if (Physics.SphereCast(followTarget.transform.position, virtualCameraSphereRadius, desiredDir, out RaycastHit hit, desiredDir.magnitude, camParams.occluderLayerMask))
             {
                 return followTarget.transform.position + (desiredDir.normalized * hit.distance);
             }
@@ -145,15 +179,15 @@ namespace ThirdPersonCamera
         #endregion              
 
         #region follow target
-        private Vector3 GetFollowPosition(Vector3 desiredPos, float followSpeed, float deltaTime)
+        private Vector3 FollowTarget(Vector3 desiredPos, float followSpeed, float deltaTime)
         {
             if(camParams.interpolateTargetFollow)
             {
-                return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearCollision(desiredPos), followSpeed + GetOcclusionFollowSpeedIncrease(), deltaTime);
+                return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearOcclusion(desiredPos), followSpeed + GetOcclusionFollowSpeedIncrease(), deltaTime);
             }
             else
             {
-                return ShortenFollowDistanceToAvoidRearCollision(desiredPos);
+                return ShortenFollowDistanceToAvoidRearOcclusion(desiredPos);
             }
         }
 
@@ -348,26 +382,53 @@ namespace ThirdPersonCamera
         #endregion
 
         #region orbit
+        private Vector3 OrbitTarget(Vector3 orbitAngles, float deltaTime)
+        {
+            Vector3 desiredPos = ShortenFollowDistanceToAvoidRearOcclusion(GetDesiredOrbitPositionFromAngles(orbitAngles));
+            return MoveCameraInterpolated(desiredPos, camParams.orbitSpeed, deltaTime);
+        }
+
         /// <summary>Calculates new orbit angles based on the current angles and the orbit input.</summary>
         private Vector2 GetNewOrbitAngles(Vector2 currAngles, Vector2 orbitInput)
         {
-            return new Vector2(ClampOrbitAngle360(currAngles.x + orbitInput.x), Mathf.Clamp(currAngles.y + orbitInput.y, camParams.minOrbitYAngle, camParams.maxOrbitYAngle));
+            return new Vector2(Mathf.Clamp(currAngles.x + orbitInput.x, camParams.minOrbitYAngle, camParams.maxOrbitYAngle), Clamp360(currAngles.y + orbitInput.y));
+            //return new Vector2(Clamp360(currAngles.x + orbitInput.x), Clamp360(currAngles.y + orbitInput.y));
         }
 
         /// <summary>Clamps an angle to within 360 degrees.</summary>
-        private float ClampOrbitAngle360(float angle)
+        private float Clamp360(float angle)
         {
-            if (angle < -360) return angle + 360;
-            if (angle >= 360) return angle - 360;
+            if (angle < 0)
+            {
+                do
+                {
+                    angle += 360;
+                } 
+                while (angle < 0);
+
+                return angle;
+            }
+            
+            if(angle >= 360)
+            {
+                do
+                {
+                    angle -= 360;
+                } 
+                while (angle >= 360);
+
+                return angle;
+            }
+                
             return angle;
         }
 
         /// <summary>Finds the camera's desired orbit position from its orbit angles.</summary>
         private Vector3 GetDesiredOrbitPositionFromAngles(Vector2 orbitAngles)
         {
-            Quaternion rotation = Quaternion.Euler(orbitAngles.y, orbitAngles.x, 0f);
-            Debug.DrawLine(followTarget.transform.position + rotation * camParams.desiredOffset, followTarget.transform.position + Vector3.up * camParams.desiredOffset.y, Color.white);
-            return followTarget.transform.position + rotation * camParams.desiredOffset;
+            Quaternion rotation = Quaternion.Euler(orbitAngles.x, orbitAngles.y, 0f);
+            Debug.DrawLine(followTarget.transform.position + (rotation * camParams.desiredOffset), followTarget.transform.position + (Vector3.up * camParams.desiredOffset.y), Color.white);
+            return followTarget.transform.position + (rotation * camParams.desiredOffset);
         }
 
         /// <summary>Updates the current orbit angles tracker based on the current camera state.</summary>
@@ -379,22 +440,23 @@ namespace ThirdPersonCamera
             }
             else
             {
-                currentOrbitAngles = new Vector2(cam.transform.eulerAngles.y, cam.transform.eulerAngles.x);
+                Vector2 euler = (Vector2)cam.transform.eulerAngles;
+                if (euler.x > 180) euler.x -= 360; //make angles below horizontal negative so it's in line with orbit angles
+                currentOrbitAngles = euler;
             }
+        }
+
+        /// <summary> caches the current orbit angle for orbit-to-follow transition hold</summary>
+        private void UpdateOrbitHoldAngles(CameraState state)
+        {
+            if(state != CameraState.OrbitToFollow_HoldingOrbitAngle) orbitHoldAngle = currentOrbitAngles;
         }
         #endregion
 
         #region transition from orbit to follow
-        private Vector3 GetDesiredOrbitToFollowHoldPosition()
+        private Vector3 GetDesiredTransitionFromOrbitToFollowPosition(Vector3 desiredFollowPos, float deltaTime)
         {
-            throw new System.NotImplementedException();
-        }
-
-        private Vector3 GetDesiredTransitionFromOrbitToFollowPosition(Vector3 desiredFollowPos)
-        {
-            float transitionTime = camParams.orbitToFollowTransitionTime;
-            float currTime = stateController.GetOrbitToFollowTransitionTimeCounter();
-            return Smoothstep(cam.transform.position, desiredFollowPos, (transitionTime - currTime) / transitionTime);
+            return Smoothstep(cam.transform.position, desiredFollowPos, camParams.orbitToFollowTransitionSpeed * deltaTime);
         }
         #endregion
 

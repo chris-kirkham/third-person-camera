@@ -11,7 +11,7 @@ namespace ThirdPersonCamera
         #region camera mode
         public CameraBehaviourMode camMode = CameraBehaviourMode.Follow;
         [Min(0)] public float orbitToFollowHoldTime = 0f;
-        public float orbitToFollowTransitionTime = 1f;
+        public float orbitToFollowTransitionSpeed = 1f;
         #endregion
 
         #region target follow parameters
@@ -30,6 +30,8 @@ namespace ThirdPersonCamera
         public bool useWorldSpaceOffset = false; //false = transform offset to follow target's local space
 
         //max follow distance
+        public bool useMinDistance = true;
+        public float minDistanceFromTarget = 1f;
         public bool useMaxDistance = true;
         public float maxDistanceFromTarget = 10f;
         //public Vector3 minOffset = Vector3.back;

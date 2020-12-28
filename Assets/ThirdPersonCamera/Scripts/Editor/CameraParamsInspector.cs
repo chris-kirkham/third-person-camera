@@ -10,14 +10,18 @@ public class CameraParamsInspector : Editor
     private CameraParams cameraParams;
 
     //foldout bools
-    private bool showCameraModeParams = false;
-    private bool showTargetFollowParams = false;
-    private bool showTargetLookParams = false;
-    private bool showOcclusionAvoidanceParams = false;
-    private bool showCamWhiskerParams = false;
-    private bool showCollisionAvoidanceParams = false;
-    private bool showTargetOrbitParams = false;
-    private bool showLayerMaskParams = false;
+    /* NOTE:
+     * Serialising these and making them static is probably the simplest way to get foldout states to persist through selection/deselection -
+     * however, it means every instance of this inspector will have the same foldout states, and it seems to reset on play anyway...
+     */
+    [SerializeField] private static bool showCameraModeParams = false;
+    [SerializeField] private static bool showTargetFollowParams = false;
+    [SerializeField] private static bool showTargetLookParams = false;
+    [SerializeField] private static bool showOcclusionAvoidanceParams = false;
+    [SerializeField] private static bool showCamWhiskerParams = false;
+    [SerializeField] private static bool showCollisionAvoidanceParams = false;
+    [SerializeField] private static bool showTargetOrbitParams = false;
+    [SerializeField] private static bool showLayerMaskParams = false;
 
     public override void OnInspectorGUI()
     {
@@ -46,8 +50,8 @@ public class CameraParamsInspector : Editor
 
             if(t.camMode == CameraBehaviourMode.FollowAndOrbit)
             {
-                t.orbitToFollowHoldTime = FloatField("Transition delay", t.orbitToFollowHoldTime);
-                t.orbitToFollowTransitionTime = FloatField("Transition time", t.orbitToFollowTransitionTime);
+                t.orbitToFollowHoldTime = FloatField("Transition hold time", t.orbitToFollowHoldTime);
+                t.orbitToFollowTransitionSpeed = FloatField("Transition speed", t.orbitToFollowTransitionSpeed);
             }
         }
     }
@@ -82,12 +86,22 @@ public class CameraParamsInspector : Editor
             //t.minOffset = Vector3Field("Min offset", t.minOffset); //not currently used
             //t.maxOffset = Vector3Field("Max offset", t.maxOffset); //not currently used
             t.interpolateTargetFollow = Toggle("Interpolate", t.interpolateTargetFollow);
-            
-            t.useMaxDistance = Toggle("Clamp camera distance from target", t.useMaxDistance);
+
+            BeginHorizontal();
+            t.useMinDistance = Toggle("Clamp min distance from target", t.useMinDistance);
+            if (t.useMinDistance)
+            {
+                t.minDistanceFromTarget = FloatField(t.minDistanceFromTarget);
+            }
+            EndHorizontal();
+
+            BeginHorizontal();
+            t.useMaxDistance = Toggle("Clamp max distance from target", t.useMaxDistance);
             if (t.useMaxDistance)
             {
-                t.maxDistanceFromTarget = FloatField("Max distance", t.maxDistanceFromTarget);
+                t.maxDistanceFromTarget = FloatField(t.maxDistanceFromTarget);
             }
+            EndHorizontal();
         }
     }
 
@@ -113,16 +127,16 @@ public class CameraParamsInspector : Editor
             t.avoidFollowTargetOcclusion = Toggle("Avoid occlusion", t.avoidFollowTargetOcclusion);
             if(t.avoidFollowTargetOcclusion)
             {
-                t.usePreviousTargetPositionsForCameraPullIn = Toggle("Follow previous target positions for pull-in", t.usePreviousTargetPositionsForCameraPullIn);
+                //t.usePreviousTargetPositionsForCameraPullIn = Toggle("Follow previous target positions for pull-in", t.usePreviousTargetPositionsForCameraPullIn);
                 t.occlusionPullInSpeedHorizontal = FloatField("Pull-in speed horizontal", t.occlusionPullInSpeedHorizontal);
                 t.occlusionPullInSpeedVertical = FloatField("Pull-in speed vertical", t.occlusionPullInSpeedVertical);
                 t.occlusionFollowSpeedIncrease = FloatField("Increase follow speed", t.occlusionFollowSpeedIncrease);
                 t.occlusionClipPanePadding = FloatField("Near clip pane padding", t.occlusionClipPanePadding);
                 //t.preserveCameraHeight = Toggle("Preserve camera height", t.preserveCameraHeight);
-                t.useTimeInOcclusionMultiplier = Toggle("Ease in/out of occlusion avoidance", t.useTimeInOcclusionMultiplier);
+                t.useTimeInOcclusionMultiplier = Toggle("Ease in/out multiplier", t.useTimeInOcclusionMultiplier);
                 if(t.useTimeInOcclusionMultiplier)
                 {
-                    t.maxTimeInOcclusionMultiplier = FloatField("Max speed increase", t.maxTimeInOcclusionMultiplier);
+                    t.maxTimeInOcclusionMultiplier = FloatField("Max", t.maxTimeInOcclusionMultiplier);
                     t.timeInOcclusionRampUpSpeed = FloatField("Ease in speed", t.timeInOcclusionRampUpSpeed);
                     t.timeInOcclusionRampDownSpeed = FloatField("Ease out speed", t.timeInOcclusionRampDownSpeed);
                 }
@@ -165,8 +179,8 @@ public class CameraParamsInspector : Editor
             {
                 t.orbitSpeed = FloatField("Speed", t.orbitSpeed);
                 t.orbitSensitivity = FloatField("Sensitivity", t.orbitSensitivity);
-                t.minOrbitYAngle = FloatField("Min Y angle", t.minOrbitYAngle);
-                t.maxOrbitYAngle = FloatField("Max Y angle", t.maxOrbitYAngle);
+                t.minOrbitYAngle = Slider("Min Y angle", t.minOrbitYAngle, -90, 90);
+                t.maxOrbitYAngle = Slider("Max Y angle", t.maxOrbitYAngle, -90, 90);
             }
         }
     }
