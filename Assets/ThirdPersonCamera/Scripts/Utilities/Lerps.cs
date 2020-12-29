@@ -51,7 +51,7 @@ public static class Lerps
         return a + ((b - a) * t);
     }
 
-    public static Vector3 SmoothstepSeparateAxes(Vector3 a, Vector3 b, float tHorizontal, float tVertical)
+    public static Vector3 Smoothstep(Vector3 a, Vector3 b, float tHorizontal, float tVertical)
     {
         return new Vector3
         (
@@ -61,7 +61,7 @@ public static class Lerps
         );
     }
 
-    public static Vector3 SmootherstepSeparateAxes(Vector3 a, Vector3 b, float tHorizontal, float tVertical)
+    public static Vector3 Smootherstep(Vector3 a, Vector3 b, float tHorizontal, float tVertical)
     {
         return new Vector3
         (
@@ -72,7 +72,7 @@ public static class Lerps
     }
 
     //Smoothdamp with different smooth times for each axis 
-    public static Vector3 SmoothDampSeparateAxis
+    public static Vector3 SmoothDampSeparateAxes
     (
         Vector3 current, 
         Vector3 target, 
@@ -88,7 +88,7 @@ public static class Lerps
     }
     
     //Smoothdamp with different smooth times for each axis
-    public static Vector3 SmoothDampSeparateAxis
+    public static Vector3 SmoothDampSeparateAxes
     (
         Vector3 current,
         Vector3 target,

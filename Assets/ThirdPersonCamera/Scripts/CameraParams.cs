@@ -12,6 +12,7 @@ namespace ThirdPersonCamera
         public CameraBehaviourMode camMode = CameraBehaviourMode.Follow;
         [Min(0)] public float orbitToFollowHoldTime = 0f;
         public float orbitToFollowTransitionSpeed = 1f;
+        public AnimationCurve transitionSpeedRamp;
         #endregion
 
         #region target follow parameters
@@ -96,6 +97,10 @@ namespace ThirdPersonCamera
         #region layer masks
         public LayerMask occluderLayerMask;
         public LayerMask colliderLayerMask;
+        #endregion
+
+        #region update function
+        public CameraUpdateFunction updateFunction = CameraUpdateFunction.LateUpdate;
         #endregion
 
     }

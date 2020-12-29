@@ -13,4 +13,7 @@ namespace ThirdPersonCamera
     /// <summary>Represents the camera's behaviour modes</summary>
     public enum CameraBehaviourMode { Follow, Orbit, FollowAndOrbit };
 
+    /// <summary>The function that updates the camera, for camera parameters</summary>
+    public enum CameraUpdateFunction { Update, LateUpdate, FixedUpdate };
+
 }
