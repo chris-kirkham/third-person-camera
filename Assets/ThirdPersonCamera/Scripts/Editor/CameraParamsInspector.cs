@@ -55,7 +55,7 @@ public class CameraParamsInspector : Editor
                 EditorGUI.indentLevel++;
 
                 t.orbitToFollowHoldTime = FloatField("Transition hold time", t.orbitToFollowHoldTime);
-                t.orbitToFollowTransitionSpeed = FloatField("Transition speed", t.orbitToFollowTransitionSpeed);
+                //t.orbitToFollowTransitionSpeed = FloatField("Transition speed", t.orbitToFollowTransitionSpeed);
                 
                 EditorGUI.indentLevel--;
             }
@@ -87,20 +87,39 @@ public class CameraParamsInspector : Editor
             t.allowMoveTowardsCamera = Toggle(new GUIContent("Target can move towards camera?", "Use the desired front offset when the follow target is facing the camera. Typically," +
                                 "this is used to let the camera stay in front of the target when the target is moving towards it," +
                                 " rather than trying to reorient behind the target."), t.allowMoveTowardsCamera);
-            
             if (t.allowMoveTowardsCamera)
             {
                 EditorGUI.indentLevel++;
+                
                 t.desiredFrontOffset = Vector3Field("Desired front offset", t.desiredFrontOffset);
                 if(t.interpolateTargetFollow) t.frontFollowSpeed = FloatField("Front follow speed", t.frontFollowSpeed);
                 t.movingTowardsCameraAngleRange = Slider("Angle range", t.movingTowardsCameraAngleRange, 0, 90);
+                
                 EditorGUI.indentLevel--;
             }
 
+            t.followHeightMode = (FollowHeightMode) EnumPopup("Follow height mode", t.followHeightMode);
+            if(t.followHeightMode == FollowHeightMode.AboveGround)
+            {
+                EditorGUI.indentLevel++;
 
-            //t.followHeightMode = (ThirdPersonCameraController.FollowHeightMode) EnumPopup("Follow height mode", t.followHeightMode);
-            //t.minOffset = Vector3Field("Min offset", t.minOffset); //not currently used
-            //t.maxOffset = Vector3Field("Max offset", t.maxOffset); //not currently used
+                t.desiredHeightAboveGround = FloatField("Height above ground", t.desiredHeightAboveGround);
+                t.aboveGroundFallbackHeight = FloatField(new GUIContent("Fallback height above target",
+                    "If no valid ground is found below the camera, the camera will move to this height above the target."),
+                    t.aboveGroundFallbackHeight);
+                t.maxGroundDistance = FloatField(new GUIContent("Max ground check distance",
+                    "The maximum distance to check for ground below the target - greater than this distance, the camera will revert to following relative to the target height."),
+                    t.maxGroundDistance);
+                if (t.desiredHeightAboveGround > t.maxGroundDistance) t.maxGroundDistance = t.desiredHeightAboveGround; //clamp max distance to desired height if necessary
+                t.maxGroundSlopeAngle = Slider(new GUIContent("Max ground slope angle",
+                    "The maximum slope angle at which geometry is counted as \"ground\"."),
+                    t.maxGroundSlopeAngle, 0f, 90f);
+                LayerMask groundLayers = MaskField("Ground layer mask", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.groundLayerMask), InternalEditorUtility.layers);
+                t.groundLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(groundLayers);
+
+                EditorGUI.indentLevel--;
+            }
+
 
             /*
             BeginHorizontal();
@@ -155,6 +174,10 @@ public class CameraParamsInspector : Editor
             if(t.avoidFollowTargetOcclusion)
             {
                 EditorGUI.indentLevel++;
+
+                LayerMask occluderLayers = MaskField("Camera occluders", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.occluderLayerMask), InternalEditorUtility.layers);
+                t.occluderLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(occluderLayers);  
+
                 //t.usePreviousTargetPositionsForCameraPullIn = Toggle("Follow previous target positions for pull-in", t.usePreviousTargetPositionsForCameraPullIn);
                 t.occlusionPullInSpeedHorizontal = FloatField("Pull-in speed horizontal", t.occlusionPullInSpeedHorizontal);
                 t.occlusionPullInSpeedVertical = FloatField("Pull-in speed vertical", t.occlusionPullInSpeedVertical);
@@ -202,7 +225,14 @@ public class CameraParamsInspector : Editor
         if (showCollisionAvoidanceParams)
         {
             EditorGUI.indentLevel++;
+
             t.avoidCollisionWithGeometry = Toggle("Avoid collisions", t.avoidCollisionWithGeometry);
+
+            //https://answers.unity.com/questions/42996/how-to-create-layermask-field-in-a-custom-editorwi.html
+            //just doing t.whateverMask = MaskField("..", t.colliderLayerMask, InternalEditorUtility.layers) makes the actual mask value one up from whatever the inspector shows, for some reason
+            LayerMask colliderLayers = MaskField("Camera colliders", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.colliderLayerMask), InternalEditorUtility.layers);
+            t.colliderLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(colliderLayers);
+
             EditorGUI.indentLevel--;
         }
     }
@@ -240,12 +270,10 @@ public class CameraParamsInspector : Editor
         if(showLayerMaskParams)
         {
             EditorGUI.indentLevel++;
-            //https://answers.unity.com/questions/42996/how-to-create-layermask-field-in-a-custom-editorwi.html
-            //just doing t.whateverMask = MaskField("..", t.colliderLayerMask, InternalEditorUtility.layers) makes the actual mask value one up from whatever the inspector shows, for some reason
-            LayerMask colliderLayers = MaskField("Camera colliders", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.colliderLayerMask), InternalEditorUtility.layers);
-            t.colliderLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(colliderLayers);
-            LayerMask occluderLayers = MaskField("Camera occluders", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.occluderLayerMask), InternalEditorUtility.layers);
-            t.occluderLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(occluderLayers);
+
+            
+
+            
             EditorGUI.indentLevel--;
         }
     }

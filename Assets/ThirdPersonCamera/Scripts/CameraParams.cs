@@ -17,6 +17,9 @@ namespace ThirdPersonCamera
 
         #region target follow parameters
         [Header("Target following")]
+        //interpolation - both front and rear offset
+        public bool interpolateTargetFollow = true;
+
         //rear offset
         public Vector3 desiredOffset = Vector3.back;
         public float followSpeed = 1f;
@@ -38,10 +41,13 @@ namespace ThirdPersonCamera
         //public Vector3 minOffset = Vector3.back;
         //public Vector3 maxOffset = Vector3.back;
 
-        public enum FollowHeightMode { AboveTarget, AboveGround };
-        public FollowHeightMode followHeightMode = FollowHeightMode.AboveTarget; //TODO: IMPLEMENT
-
-        public bool interpolateTargetFollow = true;
+        //follow at specified height above target/ground
+        public FollowHeightMode followHeightMode = FollowHeightMode.AboveTarget;
+        public float desiredHeightAboveGround = 1f;
+        public float aboveGroundFallbackHeight = 1f;
+        [Min(0)] public float maxGroundDistance = 10f; //if the ground is more than this distance below the target, the camera will fall back on following relative to the target
+        [Range(0, 90)] public float maxGroundSlopeAngle = 45f; //if the geometry below the camera slopes at a greater angle than this, it will not be treated as ground  
+        public LayerMask groundLayerMask;
         #endregion
 
         #region target look parameters
@@ -54,6 +60,8 @@ namespace ThirdPersonCamera
         #region occlusion parameters
         [Header("Occlusion avoidance")]
         public bool avoidFollowTargetOcclusion = true;
+        public LayerMask occluderLayerMask;
+
         public float occlusionPullInSpeedHorizontal = 1f;
         public float occlusionPullInSpeedVertical = 1f;
         public float occlusionFollowSpeedIncrease = 1f;
@@ -79,6 +87,7 @@ namespace ThirdPersonCamera
         #region collision avoidance parameters
         [Header("Collision avoidance")]
         public bool avoidCollisionWithGeometry = true;
+        public LayerMask colliderLayerMask;
         #endregion
 
         #region orbit parameters
@@ -95,8 +104,6 @@ namespace ThirdPersonCamera
         #endregion
 
         #region layer masks
-        public LayerMask occluderLayerMask;
-        public LayerMask colliderLayerMask;
         #endregion
 
         #region update function

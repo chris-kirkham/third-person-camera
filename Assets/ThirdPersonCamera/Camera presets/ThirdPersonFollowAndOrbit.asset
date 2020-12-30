@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 333f607575596a44395ae773e6d12e5c, type: 3}
   m_Name: ThirdPersonFollowAndOrbit
   m_EditorClassIdentifier: 
-  camMode: 2
-  orbitToFollowHoldTime: 0
+  camMode: 0
+  orbitToFollowHoldTime: 4
   orbitToFollowTransitionSpeed: 10
   transitionSpeedRamp:
     serializedVersion: 2
@@ -21,7 +21,8 @@ MonoBehaviour:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
-  desiredOffset: {x: 0, y: 0, z: -5}
+  interpolateTargetFollow: 1
+  desiredOffset: {x: 0, y: 2, z: -5}
   followSpeed: 4
   allowMoveTowardsCamera: 1
   desiredFrontOffset: {x: 0, y: 0, z: 3}
@@ -33,11 +34,20 @@ MonoBehaviour:
   useMaxDistance: 1
   maxDistanceFromTarget: 4
   followHeightMode: 0
-  interpolateTargetFollow: 1
+  desiredHeightAboveGround: 4
+  aboveGroundFallbackHeight: 1
+  maxGroundDistance: 10
+  maxGroundSlopeAngle: 45
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 256
   lookOffset: 0
   interpolateTargetLookAt: 0
   targetLookAtLerpSpeed: 4
   avoidFollowTargetOcclusion: 1
+  occluderLayerMask:
+    serializedVersion: 2
+    m_Bits: 823
   occlusionPullInSpeedHorizontal: 0
   occlusionPullInSpeedVertical: 0
   occlusionFollowSpeedIncrease: 32
@@ -52,16 +62,13 @@ MonoBehaviour:
   whiskerLength: 1
   whiskerSectorAngle: 180
   avoidCollisionWithGeometry: 1
+  colliderLayerMask:
+    serializedVersion: 2
+    m_Bits: 768
   orbit: 1
   orbitSpeed: 100
   orbitSensitivity: 1000
   minOrbitYAngle: -45
   maxOrbitYAngle: 45
   usePreviousTargetPositionsForCameraPullIn: 1
-  occluderLayerMask:
-    serializedVersion: 2
-    m_Bits: 256
-  colliderLayerMask:
-    serializedVersion: 2
-    m_Bits: 768
   updateFunction: 2

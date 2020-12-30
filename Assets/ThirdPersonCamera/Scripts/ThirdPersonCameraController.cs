@@ -55,7 +55,7 @@ namespace ThirdPersonCamera
 
         private void FixedUpdate()
         {
-            if (camParams.updateFunction == CameraUpdateFunction.FixedUpdate) UpdateCamera(Time.unscaledDeltaTime);
+            if (camParams.updateFunction == CameraUpdateFunction.FixedUpdate) UpdateCamera(Time.fixedUnscaledDeltaTime);
         }
 
         /// <summary>
@@ -83,23 +83,11 @@ namespace ThirdPersonCamera
         #region general
         private Vector3 GetCameraMoveResult(CameraState state, CameraTargetOrientationState targetOrientation, float deltaTime)
         {
-            Vector3 desiredOffset; //declared here as used in multiple switch cases
             switch (state)
             {
                 case CameraState.FollowingTarget:
                     //return FollowTarget_DistanceRotation(followTarget.transform.TransformDirection(camParams.desiredOffset), camParams.followSpeed, camParams.frontFollowSpeed, deltaTime);
-                    float followSpeed;
-                    if(targetOrientation == CameraTargetOrientationState.TowardsCamera && camParams.allowMoveTowardsCamera)
-                    {
-                        desiredOffset = camParams.desiredFrontOffset;
-                        followSpeed = camParams.frontFollowSpeed;
-                    }
-                    else
-                    {
-                        desiredOffset = camParams.desiredOffset;
-                        followSpeed = camParams.followSpeed;
-                    }
-                    return FollowTarget(GetDesiredFollowPosition(desiredOffset), followSpeed, deltaTime);
+                    return FollowTarget(deltaTime);
                 case CameraState.OrbitingTarget:
                     return OrbitTarget(currentOrbitAngles, deltaTime);
                 case CameraState.OrbitToFollow_HoldingOrbitAngle:
@@ -229,16 +217,25 @@ namespace ThirdPersonCamera
             return followTarget.transform.position + offset;
         }
 
-        private Vector3 FollowTarget(Vector3 desiredPos, float followSpeed, float deltaTime)
+        private Vector3 FollowTarget(float deltaTime)
         {
-            if(camParams.interpolateTargetFollow)
+            Vector3 desiredOffset;
+            float followSpeed;
+            if (stateController.GetOrientationState() == CameraTargetOrientationState.TowardsCamera && camParams.allowMoveTowardsCamera)
             {
-                return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearOcclusion(desiredPos), followSpeed + GetOcclusionFollowSpeedIncrease(), deltaTime);
+                desiredOffset = camParams.desiredFrontOffset;
+                followSpeed = camParams.frontFollowSpeed;
             }
-            else
+            else //moving away from camera
             {
-                return ShortenFollowDistanceToAvoidRearOcclusion(desiredPos);
+                desiredOffset = camParams.desiredOffset;
+                followSpeed = camParams.followSpeed;
             }
+
+            if(camParams.followHeightMode == FollowHeightMode.AboveGround) desiredOffset.y = GetDesiredHeightAboveGroundOffset();
+            if(camParams.avoidFollowTargetOcclusion) followSpeed += GetOcclusionFollowSpeedIncrease();
+
+            return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearOcclusion(GetDesiredFollowPosition(desiredOffset)), followSpeed, deltaTime);
         }
 
         private Vector3 GetDesiredFollowPosition(Vector3 desiredOffset)
@@ -250,6 +247,26 @@ namespace ThirdPersonCamera
             else
             {
                 return followTarget.transform.position + followTarget.transform.TransformDirection(desiredOffset);
+            }
+        }
+
+        /// <summary>
+        /// Finds the camera's desired height above the ground directly below the camera. Returns the cam params' fallback height if no valid ground found.
+        /// </summary>
+        /// <returns>
+        /// The desired height above the ground, or the fallback height if no valid ground found. Either way, the value is returned as an offset from the target's height.
+        /// </returns>
+        private float GetDesiredHeightAboveGroundOffset()
+        {
+            if(Physics.SphereCast(cam.transform.position, virtualCameraSphereRadius, Vector3.down, out RaycastHit hit, camParams.maxGroundDistance, camParams.groundLayerMask) //if ground found
+                && Vector3.Angle(Vector3.up, hit.normal) <= camParams.maxGroundSlopeAngle) //if ground angle is valid
+            {
+                float heightAboveGround = hit.point.y + camParams.desiredHeightAboveGround;
+                return heightAboveGround - followTarget.transform.position.y;
+            }
+            else
+            {
+                return camParams.aboveGroundFallbackHeight;
             }
         }
         #endregion
@@ -417,17 +434,19 @@ namespace ThirdPersonCamera
             {
                 if (IsOccluded(camParams.occlusionClipPanePadding))
                 {
-                    timeInOcclusionMultiplier = Mathf.Min(timeInOcclusionMultiplier + deltaTime * camParams.timeInOcclusionRampUpSpeed, camParams.maxTimeInOcclusionMultiplier);
+                    timeInOcclusionMultiplier = Mathf.Min(timeInOcclusionMultiplier + (deltaTime * camParams.timeInOcclusionRampUpSpeed), camParams.maxTimeInOcclusionMultiplier);
                 }
                 else
                 {
-                    timeInOcclusionMultiplier = Mathf.Max(timeInOcclusionMultiplier - deltaTime * camParams.timeInOcclusionRampDownSpeed, 0f);
+                    timeInOcclusionMultiplier = Mathf.Max(timeInOcclusionMultiplier - (deltaTime * camParams.timeInOcclusionRampDownSpeed), 0f);
                 }
             }
             else
             {
                 timeInOcclusionMultiplier = 0f;
             }
+
+            Debug.Log("timeInOcclusionMultiplier = " + timeInOcclusionMultiplier);
         }
         #endregion
 
