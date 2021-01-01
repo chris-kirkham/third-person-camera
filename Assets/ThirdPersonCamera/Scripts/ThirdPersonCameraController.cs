@@ -86,7 +86,7 @@ namespace ThirdPersonCamera
             switch (state)
             {
                 case CameraState.FollowingTarget:
-                    //return FollowTarget_DistanceRotation(followTarget.transform.TransformDirection(camParams.desiredOffset), camParams.followSpeed, camParams.frontFollowSpeed, deltaTime);
+                    //return FollowTarget_DistanceRotation(camParams.followSpeed, camParams.frontFollowSpeed, deltaTime);
                     return FollowTarget(deltaTime);
                 case CameraState.OrbitingTarget:
                     return OrbitTarget(currentOrbitAngles, deltaTime);
@@ -191,51 +191,48 @@ namespace ThirdPersonCamera
         #endregion              
 
         #region follow target
-        private Vector3 FollowTarget_DistanceRotation(Vector3 desiredOffsetWorld, float rotationSpeed, float distanceFollowSpeed, float deltaTime)
-        {
-            //get shortened offset
-            desiredOffsetWorld = ShortenFollowDistanceToAvoidRearOcclusion(followTarget.transform.position + desiredOffsetWorld) - followTarget.transform.position;
-
-            //lerp between current and desired offsets with separate horizontal and vertical
-            Vector3 currOffset = cam.transform.position - followTarget.transform.position;
-            Vector3 currOffsetHorizontal = new Vector3(currOffset.x, 0, currOffset.z);
-            float currOffsetY = currOffset.y;
-            
-            Vector3 desiredOffsetHorizontal = new Vector3(desiredOffsetWorld.x, 0, desiredOffsetWorld.z);
-            float desiredOffsetY = desiredOffsetWorld.y;
-            Vector3 lerpedOffsetHorizontal = Smoothstep(currOffsetHorizontal, desiredOffsetHorizontal, deltaTime * rotationSpeed);
-            float lerpedOffsetY = Smoothstep(currOffsetY, desiredOffsetY, deltaTime * rotationSpeed);
-
-            //lerp distance from target
-            float currDist = currOffset.magnitude;
-            float desiredDist = desiredOffsetWorld.magnitude;
-
-            float lerpedDist = Smoothstep(currDist, desiredDist, deltaTime * distanceFollowSpeed);
-
-            //get new cam position from lerped values
-            Vector3 offset = new Vector3(lerpedOffsetHorizontal.x, lerpedOffsetY, lerpedOffsetHorizontal.z).normalized * lerpedDist;
-            return followTarget.transform.position + offset;
-        }
-
         private Vector3 FollowTarget(float deltaTime)
         {
+            //get desired offset based on whether target is moving towards or away from camera. This is messy, I know.
             Vector3 desiredOffset;
-            float followSpeed;
+            float followSpeedHorz;
+            float followSpeedVert;
+            float followSpeedDistance;
             if (stateController.GetOrientationState() == CameraTargetOrientationState.TowardsCamera && camParams.allowMoveTowardsCamera)
             {
                 desiredOffset = camParams.desiredFrontOffset;
-                followSpeed = camParams.frontFollowSpeed;
+                followSpeedHorz = camParams.frontFollowSpeedOrientation;
+                followSpeedVert = camParams.frontFollowSpeedHeight;
+                followSpeedDistance = camParams.frontFollowSpeedDistance;
             }
             else //moving away from camera
             {
                 desiredOffset = camParams.desiredOffset;
-                followSpeed = camParams.followSpeed;
+                followSpeedHorz = camParams.followSpeedOrientation;
+                followSpeedVert = camParams.followSpeedHeight;
+                followSpeedDistance = camParams.followSpeedDistance;
             }
 
+            //get desired height offset based on follow height mode
             if(camParams.followHeightMode == FollowHeightMode.AboveGround) desiredOffset.y = GetDesiredHeightAboveGroundOffset();
-            if(camParams.avoidFollowTargetOcclusion) followSpeed += GetOcclusionFollowSpeedIncrease();
+            
+            //get desired position from offset
+            Vector3 desiredPos = GetDesiredFollowPosition(desiredOffset);
 
-            return MoveCameraInterpolated(ShortenFollowDistanceToAvoidRearOcclusion(GetDesiredFollowPosition(desiredOffset)), followSpeed, deltaTime);
+            //shorten follow distance if necessary
+            desiredPos = ShortenFollowDistanceToAvoidRearOcclusion(desiredPos);
+
+            //increase follow speed if avoiding occlusion
+            if (camParams.avoidFollowTargetOcclusion) followSpeedHorz += GetOcclusionFollowSpeedIncrease();
+
+            //interpolate between current and desired positions
+            Vector3 newCamPos = MoveCameraInterpolated(desiredPos, followSpeedHorz, followSpeedVert, deltaTime);
+
+            //interpolate distance from target separately 
+            float desiredDistance = desiredOffset.magnitude;
+            Vector3 newOffset = newCamPos - followTarget.transform.position; //convert new cam position back to a world space offset from follow target
+            float newDistance = Smootherstep(newOffset.magnitude, desiredDistance, followSpeedDistance * deltaTime); //interpolate between current offset distance and desired distance
+            return followTarget.transform.position + (newOffset.normalized * newDistance); //scale normalised offset by new distance and convert back to world position
         }
 
         private Vector3 GetDesiredFollowPosition(Vector3 desiredOffset)
@@ -379,7 +376,7 @@ namespace ThirdPersonCamera
         /// <returns>True if the follow target is occluded by geometry on the occluder layer(s)</returns>
         private bool IsOccluded(float clipPanePadding = 0f)
         {
-            Vector3 dir = followTarget.transform.position - cam.transform.position;
+            Vector3 dir = followTarget.transform.position - cam.GetNearClipPaneCentreWorld();
 
             //? if(Physics.BoxCast(camPos, cam.GetNearClipPaneHalfExtents(), followTarget.transform.position - camPos, Quaternion.LookRotation(cam.transform.forward, Vector3.up), maxDistance, occluderLayers)) ...
             return cam.RaycastsFromNearClipPane(dir, out _, dir.magnitude, camParams.occluderLayerMask, clipPanePadding);
@@ -445,8 +442,6 @@ namespace ThirdPersonCamera
             {
                 timeInOcclusionMultiplier = 0f;
             }
-
-            Debug.Log("timeInOcclusionMultiplier = " + timeInOcclusionMultiplier);
         }
         #endregion
 
@@ -454,13 +449,19 @@ namespace ThirdPersonCamera
         private Vector3 OrbitTarget(Vector3 orbitAngles, float deltaTime)
         {
             Vector3 desiredPos = ShortenFollowDistanceToAvoidRearOcclusion(GetDesiredOrbitPositionFromAngles(orbitAngles));
-            return MoveCameraInterpolated(desiredPos, camParams.orbitSpeed, deltaTime);
+            Vector3 newCamPos = MoveCameraInterpolated(desiredPos, camParams.orbitSpeed, deltaTime);
+            
+            //interpolate distance from target separately 
+            Vector3 newOffset = newCamPos - followTarget.transform.position; //convert new cam position back to a world space offset from follow target
+            float newDistance = Smootherstep((cam.transform.position - followTarget.transform.position).magnitude, camParams.desiredOrbitDistance, camParams.orbitSpeedDistance * deltaTime); //interpolate between current offset distance and desired distance
+            return followTarget.transform.position + (newOffset.normalized * newDistance); //scale normalised offset by new distance and convert back to world position
         }
 
-        /// <summary>Calculates new orbit angles based on the current angles and the orbit input.</summary>
-        private Vector2 GetNewOrbitAngles(Vector2 currAngles, Vector2 orbitInput)
+        /// <summary>Finds the camera's desired orbit position from its orbit angles and distance.</summary>
+        private Vector3 GetDesiredOrbitPositionFromAngles(Vector2 orbitAngles)
         {
-            return new Vector2(Mathf.Clamp(currAngles.x + orbitInput.x, camParams.minOrbitYAngle, camParams.maxOrbitYAngle), Clamp360(currAngles.y + orbitInput.y));
+            Quaternion rotation = Quaternion.Euler(orbitAngles.x, orbitAngles.y, 0f);
+            return followTarget.transform.position + (rotation * (Vector3.back * camParams.desiredOrbitDistance));
         }
 
         /// <summary>Clamps an angle to within 360 degrees.</summary>
@@ -491,13 +492,7 @@ namespace ThirdPersonCamera
             return angle;
         }
 
-        /// <summary>Finds the camera's desired orbit position from its orbit angles.</summary>
-        private Vector3 GetDesiredOrbitPositionFromAngles(Vector2 orbitAngles)
-        {
-            Quaternion rotation = Quaternion.Euler(orbitAngles.x, orbitAngles.y, 0f);
-            Debug.DrawLine(followTarget.transform.position + (rotation * camParams.desiredOffset), followTarget.transform.position + (Vector3.up * camParams.desiredOffset.y), Color.white);
-            return followTarget.transform.position + (rotation * camParams.desiredOffset);
-        }
+        /* functions to update orbit trackers */
 
         /// <summary>Updates the current orbit angles tracker based on the current camera state.</summary>
         private void UpdateCurrentOrbitAngles()
@@ -512,6 +507,12 @@ namespace ThirdPersonCamera
                 if (euler.x > 180) euler.x -= 360; //make angles below horizontal negative so it's in line with orbit angles
                 currentOrbitAngles = euler;
             }
+        }
+
+        /// <summary>Calculates new orbit angles based on the current angles and the orbit input.</summary>
+        private Vector2 GetNewOrbitAngles(Vector2 currAngles, Vector2 orbitInput)
+        {
+            return new Vector2(Mathf.Clamp(currAngles.x + orbitInput.x, camParams.minOrbitYAngle, camParams.maxOrbitYAngle), Clamp360(currAngles.y + orbitInput.y));
         }
 
         /// <summary> caches the current orbit angle for orbit-to-follow transition hold</summary>

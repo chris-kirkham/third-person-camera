@@ -15,19 +15,23 @@ namespace ThirdPersonCamera
         public AnimationCurve transitionSpeedRamp;
         #endregion
 
-        #region target follow parameters
+        #region target follow
         [Header("Target following")]
         //interpolation - both front and rear offset
         public bool interpolateTargetFollow = true;
 
         //rear offset
         public Vector3 desiredOffset = Vector3.back;
-        public float followSpeed = 1f;
+        public float followSpeedOrientation = 1f;
+        public float followSpeedHeight = 1f;
+        public float followSpeedDistance = 1f;
 
         //front offset, for moving towards camera
         public bool allowMoveTowardsCamera = true;
         public Vector3 desiredFrontOffset = Vector3.forward;
-        public float frontFollowSpeed = 1f;
+        public float frontFollowSpeedOrientation = 1f;
+        public float frontFollowSpeedHeight = 1f;
+        public float frontFollowSpeedDistance = 1f;
         [Range(0, 90)] public float movingTowardsCameraAngleRange = 15f;
 
         //use world space offset (rear and front follow)
@@ -50,14 +54,25 @@ namespace ThirdPersonCamera
         public LayerMask groundLayerMask;
         #endregion
 
-        #region target look parameters
+        #region orbit
+        [Header("Target orbit")]
+        public bool orbit = true;
+        public float desiredOrbitDistance = 10f;
+        public float orbitSpeed = 10f;
+        public float orbitSpeedDistance = 10f;
+        public float orbitSensitivity = 10f;
+        public float minOrbitYAngle = -45f;
+        public float maxOrbitYAngle = 45f;
+        #endregion
+
+        #region target look
         [Header("Target look")]
         public float lookOffset = 0f;
         public bool interpolateTargetLookAt = true;
         public float targetLookAtLerpSpeed = 1f;
         #endregion
 
-        #region occlusion parameters
+        #region occlusion
         [Header("Occlusion avoidance")]
         public bool avoidFollowTargetOcclusion = true;
         public LayerMask occluderLayerMask;
@@ -67,6 +82,7 @@ namespace ThirdPersonCamera
         public float occlusionFollowSpeedIncrease = 1f;
         public float occlusionClipPanePadding = 0f;
         //public bool preserveCameraHeight = true;
+        //public bool usePreviousTargetPositionsForCameraPullIn = true;
 
         //parameters for ramping up/down occlusion avoidance speedups based on how long the target has been occluded
         public bool useTimeInOcclusionMultiplier = true;
@@ -75,7 +91,7 @@ namespace ThirdPersonCamera
         public float timeInOcclusionRampDownSpeed = 1f;
         #endregion
 
-        #region camera whisker parameters
+        #region camera whiskers
         [Header("Camera whiskers")]
         public bool useCamWhiskers = true;
         public float whiskerPushStrength = 1f;
@@ -84,26 +100,10 @@ namespace ThirdPersonCamera
         [Range(0, 360)] public float whiskerSectorAngle = 180;
         #endregion
 
-        #region collision avoidance parameters
+        #region collision avoidance
         [Header("Collision avoidance")]
         public bool avoidCollisionWithGeometry = true;
         public LayerMask colliderLayerMask;
-        #endregion
-
-        #region orbit parameters
-        [Header("Target orbit")]
-        public bool orbit = true;
-        public float orbitSpeed = 10f;
-        public float orbitSensitivity = 10f;
-        public float minOrbitYAngle = -45f;
-        public float maxOrbitYAngle = 45f;
-        #endregion
-
-        #region parameters affecting more than one camera behaviour
-        public bool usePreviousTargetPositionsForCameraPullIn = true;
-        #endregion
-
-        #region layer masks
         #endregion
 
         #region update function

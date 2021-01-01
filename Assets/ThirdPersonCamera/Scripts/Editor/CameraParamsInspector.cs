@@ -14,31 +14,69 @@ public class CameraParamsInspector : Editor
      * Serialising these and making them static is probably the simplest way to get foldout states to persist through selection/deselection -
      * however, it means every instance of this inspector will have the same foldout states, and it seems to reset on play anyway...
      */
-    [SerializeField] private static bool showCameraModeParams = false;
-    [SerializeField] private static bool showTargetFollowParams = false;
-    [SerializeField] private static bool showTargetLookParams = false;
-    [SerializeField] private static bool showOcclusionAvoidanceParams = false;
-    [SerializeField] private static bool showCamWhiskerParams = false;
-    [SerializeField] private static bool showCollisionAvoidanceParams = false;
-    [SerializeField] private static bool showTargetOrbitParams = false;
-    [SerializeField] private static bool showLayerMaskParams = false;
-    [SerializeField] private static bool showCamUpdateFunctionParams = false;
+    [SerializeField] private static bool showCameraModeParams = true;
+    [SerializeField] private static bool showTargetFollowParams = true;
+    [SerializeField] private static bool showTargetLookParams = true;
+    [SerializeField] private static bool showOcclusionAvoidanceParams = true;
+    [SerializeField] private static bool showCamWhiskerParams = true;
+    [SerializeField] private static bool showCollisionAvoidanceParams = true;
+    [SerializeField] private static bool showTargetOrbitParams = true;
+    [SerializeField] private static bool showCamUpdateFunctionParams = true;
+
+    //"tabs" via GUILayout.Toolbar
+    private static int currentTabID = 0;
+    private static readonly string[] tabNames = new string[7] { "Camera mode", "Target follow", "Target orbit", "Target look", "Occlusion avoidance", "Collision avoidance", "Update function" }; 
 
     public override void OnInspectorGUI()
     {
         cameraParams = (CameraParams) target;
 
+        DoTabs();
+
+        switch(currentTabID)
+        {
+            case 0:
+                DoCameraMode(cameraParams);
+                break;
+            case 1:
+                DoTargetFollowing(cameraParams);
+                break;
+            case 2:
+                DoTargetOrbit(cameraParams);
+                break;
+            case 3:
+                DoTargetLook(cameraParams);
+                break;
+            case 4:
+                DoOcclusionAvoidance(cameraParams);
+                break;
+            case 5:
+                DoCollisionAvoidance(cameraParams);
+                break;
+            case 6:
+                DoCamUpdateFunction(cameraParams);
+                break;
+            default:
+                break;
+        }
+        
+        /*
         DoCameraMode(cameraParams);
         DoTargetFollowing(cameraParams);
+        DoTargetOrbit(cameraParams);
         DoTargetLook(cameraParams);
         DoOcclusionAvoidance(cameraParams);
         DoCamWhiskers(cameraParams);
         DoCollisionAvoidance(cameraParams);
-        DoTargetOrbit(cameraParams);
-        DoLayerMasks(cameraParams);
         DoCamUpdateFunction(cameraParams);
+        */
 
         EditorUtility.SetDirty(target);
+    }
+
+    private void DoTabs()
+    {
+        currentTabID = GUILayout.SelectionGrid(currentTabID, tabNames, 2);
     }
 
     private void DoCameraMode(CameraParams t)
@@ -69,6 +107,10 @@ public class CameraParamsInspector : Editor
         showTargetFollowParams = FoldoutHeader(showTargetFollowParams, "Target follow");
         if(showTargetFollowParams)
         {
+            /* Rear follow */
+
+            LabelField("Rear follow", EditorStyles.boldLabel);
+
             EditorGUI.indentLevel++;
 
             t.interpolateTargetFollow = Toggle("Interpolate", t.interpolateTargetFollow);
@@ -76,27 +118,46 @@ public class CameraParamsInspector : Editor
             t.desiredOffset = Vector3Field("Desired offset", t.desiredOffset);
             if (t.interpolateTargetFollow)
             {
-                t.followSpeed = FloatField("Follow speed", t.followSpeed);
+                LabelField("Follow speeds", EditorStyles.boldLabel);
+                
+                EditorGUI.indentLevel++;
+
+                t.followSpeedOrientation = FloatField(new GUIContent("Orientation", "How quickly the camera will orient itself horizontally to the target's facing."), t.followSpeedOrientation);
+                t.followSpeedHeight = FloatField(new GUIContent("Height", "How quickly the camera will move towards the target's height + offset."), t.followSpeedHeight);
+                t.followSpeedDistance = FloatField(new GUIContent("Distance", "How quickly the camera will move towards the desired distance from the target."), t.followSpeedDistance);
+
+                EditorGUI.indentLevel--;
             }
-            
+
+            Space();
+
             /*
             t.useWorldSpaceOffset = Toggle(new GUIContent("Use world space offset?", "By default, the offset is relative to the follow target's local space." +
                 " Set this to true to use world space offset."), t.useWorldSpaceOffset);
             */
 
+            /* Front follow */
+            LabelField("Front follow", EditorStyles.boldLabel);
             t.allowMoveTowardsCamera = Toggle(new GUIContent("Target can move towards camera?", "Use the desired front offset when the follow target is facing the camera. Typically," +
                                 "this is used to let the camera stay in front of the target when the target is moving towards it," +
                                 " rather than trying to reorient behind the target."), t.allowMoveTowardsCamera);
             if (t.allowMoveTowardsCamera)
             {
-                EditorGUI.indentLevel++;
-                
+
                 t.desiredFrontOffset = Vector3Field("Desired front offset", t.desiredFrontOffset);
-                if(t.interpolateTargetFollow) t.frontFollowSpeed = FloatField("Front follow speed", t.frontFollowSpeed);
+                LabelField("Front follow speeds", EditorStyles.boldLabel);
+
+                EditorGUI.indentLevel++;
+
+                if(t.interpolateTargetFollow) t.frontFollowSpeedOrientation = FloatField("Orientation", t.frontFollowSpeedOrientation);
+                if(t.interpolateTargetFollow) t.frontFollowSpeedHeight = FloatField("Height", t.frontFollowSpeedHeight);
+                if(t.interpolateTargetFollow) t.frontFollowSpeedDistance = FloatField("Distance", t.frontFollowSpeedDistance);
                 t.movingTowardsCameraAngleRange = Slider("Angle range", t.movingTowardsCameraAngleRange, 0, 90);
                 
                 EditorGUI.indentLevel--;
             }
+
+            LabelField("Follow height", EditorStyles.boldLabel);
 
             t.followHeightMode = (FollowHeightMode) EnumPopup("Follow height mode", t.followHeightMode);
             if(t.followHeightMode == FollowHeightMode.AboveGround)
@@ -121,6 +182,8 @@ public class CameraParamsInspector : Editor
             }
 
 
+            LabelField("Clamp min/max distance", EditorStyles.boldLabel);
+
             /*
             BeginHorizontal();
             t.useMinDistance = Toggle("Clamp min distance from target", t.useMinDistance);
@@ -136,7 +199,9 @@ public class CameraParamsInspector : Editor
             if (t.useMaxDistance)
             {
                 EditorGUI.indentLevel++;
+                
                 t.maxDistanceFromTarget = FloatField(t.maxDistanceFromTarget);
+                
                 EditorGUI.indentLevel--;
             }
             EndHorizontal();
@@ -152,14 +217,18 @@ public class CameraParamsInspector : Editor
         if(showTargetLookParams)
         {
             EditorGUI.indentLevel++;
+            
             t.lookOffset = FloatField("Look offset", t.lookOffset);
             t.interpolateTargetLookAt = Toggle("Interpolate", t.interpolateTargetLookAt);
             if(t.interpolateTargetLookAt)
             {
                 EditorGUI.indentLevel++;
+                
                 t.targetLookAtLerpSpeed = FloatField("Look at speed", t.targetLookAtLerpSpeed);
+                
                 EditorGUI.indentLevel--;
             }
+            
             EditorGUI.indentLevel--;
         }
     }
@@ -170,6 +239,7 @@ public class CameraParamsInspector : Editor
         if(showOcclusionAvoidanceParams)
         {
             EditorGUI.indentLevel++;
+            
             t.avoidFollowTargetOcclusion = Toggle("Avoid occlusion", t.avoidFollowTargetOcclusion);
             if(t.avoidFollowTargetOcclusion)
             {
@@ -188,13 +258,17 @@ public class CameraParamsInspector : Editor
                 if(t.useTimeInOcclusionMultiplier)
                 {
                     EditorGUI.indentLevel++;
+                    
                     t.maxTimeInOcclusionMultiplier = FloatField("Max", t.maxTimeInOcclusionMultiplier);
                     t.timeInOcclusionRampUpSpeed = FloatField("Ease in speed", t.timeInOcclusionRampUpSpeed);
                     t.timeInOcclusionRampDownSpeed = FloatField("Ease out speed", t.timeInOcclusionRampDownSpeed);
+                    
                     EditorGUI.indentLevel--;
                 }
+                
                 EditorGUI.indentLevel--;
             }
+            
             EditorGUI.indentLevel--;
         }
     }
@@ -243,11 +317,15 @@ public class CameraParamsInspector : Editor
         if(showTargetOrbitParams)
         {
             EditorGUI.indentLevel++;
+            
             t.orbit = Toggle("Orbit target", t.orbit);
             if(t.orbit)
             {
                 EditorGUI.indentLevel++;
+
+                t.desiredOrbitDistance = FloatField("Desired orbit distance", t.desiredOrbitDistance);
                 t.orbitSpeed = FloatField("Speed", t.orbitSpeed);
+                t.orbitSpeedDistance = FloatField("Speed (distance)", t.orbitSpeedDistance);
                 t.orbitSensitivity = FloatField("Sensitivity", t.orbitSensitivity);
 
                 //min/max y angles 
@@ -258,21 +336,9 @@ public class CameraParamsInspector : Editor
                 t.maxOrbitYAngle = FloatField(t.maxOrbitYAngle);
                 EndHorizontal();
                 if (t.minOrbitYAngle > t.maxOrbitYAngle) t.minOrbitYAngle = t.maxOrbitYAngle; //stop min angle going above max angle
+                
                 EditorGUI.indentLevel--;
             }
-            EditorGUI.indentLevel--;
-        }
-    }
-
-    private void DoLayerMasks(CameraParams t)
-    {
-        showLayerMaskParams = FoldoutHeader(showLayerMaskParams, "Layer masks");
-        if(showLayerMaskParams)
-        {
-            EditorGUI.indentLevel++;
-
-            
-
             
             EditorGUI.indentLevel--;
         }
