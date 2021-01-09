@@ -33,7 +33,11 @@ public class CameraParamsInspector : Editor
 
         DoTabs();
 
-        switch(currentTabID)
+        Space();
+        DoDividerLine(1);
+        Space();
+
+        switch (currentTabID)
         {
             case 0:
                 DoCameraMode(cameraParams);
@@ -60,17 +64,6 @@ public class CameraParamsInspector : Editor
                 break;
         }
         
-        /*
-        DoCameraMode(cameraParams);
-        DoTargetFollowing(cameraParams);
-        DoTargetOrbit(cameraParams);
-        DoTargetLook(cameraParams);
-        DoOcclusionAvoidance(cameraParams);
-        DoCamWhiskers(cameraParams);
-        DoCollisionAvoidance(cameraParams);
-        DoCamUpdateFunction(cameraParams);
-        */
-
         EditorUtility.SetDirty(target);
     }
 
@@ -81,7 +74,6 @@ public class CameraParamsInspector : Editor
 
     private void DoCameraMode(CameraParams t)
     {
-        showCameraModeParams = FoldoutHeader(showCameraModeParams, "Camera behaviour mode");
         if(showCameraModeParams)
         {
             EditorGUI.indentLevel++;
@@ -104,14 +96,12 @@ public class CameraParamsInspector : Editor
 
     private void DoTargetFollowing(CameraParams t)
     {
-        showTargetFollowParams = FoldoutHeader(showTargetFollowParams, "Target follow");
         if(showTargetFollowParams)
         {
-            /* Rear follow */
-
-            LabelField("Rear follow", EditorStyles.boldLabel);
-
             EditorGUI.indentLevel++;
+
+            /* Rear follow */
+            LabelField("Rear follow", EditorStyles.boldLabel);
 
             t.interpolateTargetFollow = Toggle("Interpolate", t.interpolateTargetFollow);
             
@@ -143,7 +133,6 @@ public class CameraParamsInspector : Editor
                                 " rather than trying to reorient behind the target."), t.allowMoveTowardsCamera);
             if (t.allowMoveTowardsCamera)
             {
-
                 t.desiredFrontOffset = Vector3Field("Desired front offset", t.desiredFrontOffset);
                 LabelField("Front follow speeds", EditorStyles.boldLabel);
 
@@ -184,7 +173,6 @@ public class CameraParamsInspector : Editor
 
             LabelField("Clamp min/max distance", EditorStyles.boldLabel);
 
-            /*
             BeginHorizontal();
             t.useMinDistance = Toggle("Clamp min distance from target", t.useMinDistance);
             if (t.useMinDistance)
@@ -192,7 +180,6 @@ public class CameraParamsInspector : Editor
                 t.minDistanceFromTarget = FloatField(t.minDistanceFromTarget);
             }
             EndHorizontal();
-            */
 
             BeginHorizontal();
             t.useMaxDistance = Toggle("Clamp max distance from target", t.useMaxDistance);
@@ -213,7 +200,6 @@ public class CameraParamsInspector : Editor
 
     private void DoTargetLook(CameraParams t)
     {
-        showTargetLookParams = FoldoutHeader(showTargetLookParams, "Target look");
         if(showTargetLookParams)
         {
             EditorGUI.indentLevel++;
@@ -235,7 +221,6 @@ public class CameraParamsInspector : Editor
 
     private void DoOcclusionAvoidance(CameraParams t)
     {
-        showOcclusionAvoidanceParams = FoldoutHeader(showOcclusionAvoidanceParams, "Occlusion avoidance");
         if(showOcclusionAvoidanceParams)
         {
             EditorGUI.indentLevel++;
@@ -245,15 +230,13 @@ public class CameraParamsInspector : Editor
             {
                 EditorGUI.indentLevel++;
 
-                LayerMask occluderLayers = MaskField("Camera occluders", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.occluderLayerMask), InternalEditorUtility.layers);
+                LayerMask occluderLayers = MaskField("Occluders layer mask", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.occluderLayerMask), InternalEditorUtility.layers);
                 t.occluderLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(occluderLayers);  
 
-                //t.usePreviousTargetPositionsForCameraPullIn = Toggle("Follow previous target positions for pull-in", t.usePreviousTargetPositionsForCameraPullIn);
                 t.occlusionPullInSpeedHorizontal = FloatField("Pull-in speed horizontal", t.occlusionPullInSpeedHorizontal);
                 t.occlusionPullInSpeedVertical = FloatField("Pull-in speed vertical", t.occlusionPullInSpeedVertical);
                 t.occlusionFollowSpeedIncrease = FloatField("Increase follow speed", t.occlusionFollowSpeedIncrease);
                 t.occlusionClipPanePadding = FloatField("Near clip pane padding", t.occlusionClipPanePadding);
-                //t.preserveCameraHeight = Toggle("Preserve camera height", t.preserveCameraHeight);
                 t.useTimeInOcclusionMultiplier = Toggle("Ease in/out multiplier", t.useTimeInOcclusionMultiplier);
                 if(t.useTimeInOcclusionMultiplier)
                 {
@@ -275,7 +258,6 @@ public class CameraParamsInspector : Editor
 
     private void DoCamWhiskers(CameraParams t)
     {
-        showCamWhiskerParams = FoldoutHeader(showCamWhiskerParams, "Camera whiskers");
         if(showCamWhiskerParams)
         {
             EditorGUI.indentLevel++;
@@ -295,17 +277,23 @@ public class CameraParamsInspector : Editor
 
     private void DoCollisionAvoidance(CameraParams t)
     {
-        showCollisionAvoidanceParams = FoldoutHeader(showCollisionAvoidanceParams, "Collision avoidance");
         if (showCollisionAvoidanceParams)
         {
             EditorGUI.indentLevel++;
 
             t.avoidCollisionWithGeometry = Toggle("Avoid collisions", t.avoidCollisionWithGeometry);
+            if(t.avoidCollisionWithGeometry)
+            {
+                EditorGUI.indentLevel++;
 
-            //https://answers.unity.com/questions/42996/how-to-create-layermask-field-in-a-custom-editorwi.html
-            //just doing t.whateverMask = MaskField("..", t.colliderLayerMask, InternalEditorUtility.layers) makes the actual mask value one up from whatever the inspector shows, for some reason
-            LayerMask colliderLayers = MaskField("Camera colliders", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.colliderLayerMask), InternalEditorUtility.layers);
-            t.colliderLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(colliderLayers);
+                //https://answers.unity.com/questions/42996/how-to-create-layermask-field-in-a-custom-editorwi.html
+                //just doing t.whateverMask = MaskField("..", t.colliderLayerMask, InternalEditorUtility.layers) makes the actual mask value one up from whatever the inspector shows, for some reason
+                LayerMask colliderLayers = MaskField("Colliders layer mask", InternalEditorUtility.LayerMaskToConcatenatedLayersMask(t.colliderLayerMask), InternalEditorUtility.layers);
+                t.colliderLayerMask = InternalEditorUtility.ConcatenatedLayersMaskToLayerMask(colliderLayers);
+                t.collisionMaxDistClampRelaxTime = FloatField("Distance clamp relaxation time", t.collisionMaxDistClampRelaxTime);
+
+                EditorGUI.indentLevel--;
+            }
 
             EditorGUI.indentLevel--;
         }
@@ -313,7 +301,6 @@ public class CameraParamsInspector : Editor
 
     private void DoTargetOrbit(CameraParams t)
     {
-        showTargetOrbitParams = FoldoutHeader(showTargetOrbitParams, "Target orbit");
         if(showTargetOrbitParams)
         {
             EditorGUI.indentLevel++;
@@ -346,7 +333,6 @@ public class CameraParamsInspector : Editor
 
     private void DoCamUpdateFunction(CameraParams t)
     {
-        showCamUpdateFunctionParams = FoldoutHeader(showCamUpdateFunctionParams, "Camera update function");
         if(showCamUpdateFunctionParams)
         {
             EditorGUI.indentLevel++;
@@ -365,6 +351,14 @@ public class CameraParamsInspector : Editor
     private bool FoldoutHeader(bool foldout, string label)
     {
         return Foldout(foldout, label, true, EditorStyles.foldoutHeader);
+    }
+
+    private void DoDividerLine(int height)
+    {
+        Rect rect = GetControlRect(false, height);
+        rect.height = height;
+
+        EditorGUI.DrawRect(rect, new Color(0.5f, 0.5f, 0.5f, 1));
     }
     #endregion
 }

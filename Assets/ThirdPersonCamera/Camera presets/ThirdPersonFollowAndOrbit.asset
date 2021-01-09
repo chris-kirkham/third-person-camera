@@ -28,15 +28,15 @@ MonoBehaviour:
   followSpeedDistance: 20
   allowMoveTowardsCamera: 1
   desiredFrontOffset: {x: 0, y: 0, z: 5}
-  frontFollowSpeedOrientation: 4
+  frontFollowSpeedOrientation: 0
   frontFollowSpeedHeight: 10
   frontFollowSpeedDistance: 20
   movingTowardsCameraAngleRange: 30
   useWorldSpaceOffset: 0
   useMinDistance: 0
-  minDistanceFromTarget: 2
+  minDistanceFromTarget: 4
   useMaxDistance: 0
-  maxDistanceFromTarget: 8
+  maxDistanceFromTarget: 10
   followHeightMode: 0
   desiredHeightAboveGround: 1.5
   aboveGroundFallbackHeight: 0
@@ -48,23 +48,23 @@ MonoBehaviour:
   orbit: 1
   desiredOrbitDistance: 4
   orbitSpeed: 100
-  orbitSpeedDistance: 10
+  orbitSpeedDistance: 50
   orbitSensitivity: 1000
   minOrbitYAngle: -45
   maxOrbitYAngle: 45
   lookOffset: 0
   interpolateTargetLookAt: 0
-  targetLookAtLerpSpeed: 4
+  targetLookAtLerpSpeed: 10
   avoidFollowTargetOcclusion: 1
   occluderLayerMask:
     serializedVersion: 2
     m_Bits: 256
-  occlusionPullInSpeedHorizontal: 4
-  occlusionPullInSpeedVertical: 4
+  occlusionPullInSpeedHorizontal: 0
+  occlusionPullInSpeedVertical: 0
   occlusionFollowSpeedIncrease: 32
   occlusionClipPanePadding: 0
   useTimeInOcclusionMultiplier: 1
-  maxTimeInOcclusionMultiplier: 0.5
+  maxTimeInOcclusionMultiplier: 1
   timeInOcclusionRampUpSpeed: 1
   timeInOcclusionRampDownSpeed: 1
   useCamWhiskers: 0
@@ -76,4 +76,5 @@ MonoBehaviour:
   colliderLayerMask:
     serializedVersion: 2
     m_Bits: 768
+  collisionMaxDistClampRelaxTime: 0
   updateFunction: 2

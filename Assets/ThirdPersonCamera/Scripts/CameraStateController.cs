@@ -28,9 +28,9 @@ namespace ThirdPersonCamera
 
         private void Update()
         {
+            UpdateCameraState();
+            UpdateTargetOrientationState();
             UpdateOrbitToFollowDelayCounter(Time.deltaTime);
-            //UpdateOrbitToFollowTransitionTimeCounter(Time.deltaTime);
-            //UpdateOrbitToFollowInterpValue();
         }
 
         public void UpdateCameraState()
@@ -101,15 +101,7 @@ namespace ThirdPersonCamera
             }
         }
 
-        public CameraState GetCameraState()
-        {
-            return state;
-        }
 
-        public CameraTargetOrientationState GetOrientationState()
-        {
-            return orientation;
-        }
 
         private bool IsOrbiting()
         {
@@ -118,19 +110,19 @@ namespace ThirdPersonCamera
 
         private bool CanOrbit()
         {
-            CameraBehaviourMode camMode = components.cameraParams.camMode;
+            CameraBehaviourMode camMode = components.GetCameraParams().camMode;
             return (camMode == CameraBehaviourMode.Orbit || camMode == CameraBehaviourMode.FollowAndOrbit);
         }
 
         private bool CanFollow()
         {
-            CameraBehaviourMode camMode = components.cameraParams.camMode;
+            CameraBehaviourMode camMode = components.GetCameraParams().camMode;
             return (camMode == CameraBehaviourMode.FollowAndOrbit || camMode == CameraBehaviourMode.Follow);
         }
 
         private bool TargetCanMoveTowardsCamera()
         {
-            return components.cameraParams.allowMoveTowardsCamera;
+            return components.GetCameraParams().allowMoveTowardsCamera;
         }
 
         private bool TargetIsMovingTowardsCamera()
@@ -138,12 +130,12 @@ namespace ThirdPersonCamera
             Vector3 camForwardFlat = new Vector3(cam.transform.forward.x, 0f, cam.transform.forward.z).normalized;
             Vector3 followTargetForward = components.followTarget.transform.forward;
             Vector3 targetForwardFlat = new Vector3(followTargetForward.x, 0f, followTargetForward.z).normalized;
-            return Mathf.Abs(Vector3.SignedAngle(camForwardFlat, targetForwardFlat, Vector3.up)) > (180 - components.cameraParams.movingTowardsCameraAngleRange);
+            return Mathf.Abs(Vector3.SignedAngle(camForwardFlat, targetForwardFlat, Vector3.up)) > (180 - components.GetCameraParams().movingTowardsCameraAngleRange);
         }
 
         private bool IsCamOrientationNearEnoughDesiredFollow()
         {
-            CameraParams camParams = components.cameraParams;
+            CameraParams camParams = components.GetCameraParams();
             
             //get front or rear offset
             Vector3 desiredOffset = TargetIsMovingTowardsCamera() && TargetCanMoveTowardsCamera() ? camParams.desiredFrontOffset : camParams.desiredOffset;
@@ -159,12 +151,23 @@ namespace ThirdPersonCamera
         {
             if (state != CameraState.OrbitToFollow_HoldingOrbitAngle) //reset counter
             {
-                orbitToFollowDelayCounter = components.cameraParams.orbitToFollowHoldTime;
+                orbitToFollowDelayCounter = components.GetCameraParams().orbitToFollowHoldTime;
             }
             else //decrement counter
             {
                 orbitToFollowDelayCounter -= deltaTime;
             }
+        }
+
+        /* Getters */
+        public CameraState GetCameraState()
+        {
+            return state;
+        }
+
+        public CameraTargetOrientationState GetOrientationState()
+        {
+            return orientation;
         }
 
         public float GetOrbitToFollowDelayTimeCounter()

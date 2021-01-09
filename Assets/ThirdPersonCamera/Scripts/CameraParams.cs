@@ -104,6 +104,7 @@ namespace ThirdPersonCamera
         [Header("Collision avoidance")]
         public bool avoidCollisionWithGeometry = true;
         public LayerMask colliderLayerMask;
+        public float collisionMaxDistClampRelaxTime = 0f;
         #endregion
 
         #region update function

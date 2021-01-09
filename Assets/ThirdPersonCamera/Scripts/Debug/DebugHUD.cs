@@ -13,7 +13,7 @@ namespace ThirdPersonCamera
     {
         //camera/components to track
         public Camera cam;
-        public ThirdPersonCameraController camController;
+        public CameraMovement camController;
         public CameraStateController stateController;
         public CameraControllerInput camInput;
 

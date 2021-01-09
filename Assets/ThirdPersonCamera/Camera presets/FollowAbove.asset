@@ -1,0 +1,80 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 333f607575596a44395ae773e6d12e5c, type: 3}
+  m_Name: FollowAbove
+  m_EditorClassIdentifier: 
+  camMode: 0
+  orbitToFollowHoldTime: 0
+  orbitToFollowTransitionSpeed: 1
+  transitionSpeedRamp:
+    serializedVersion: 2
+    m_Curve: []
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  interpolateTargetFollow: 1
+  desiredOffset: {x: 0, y: 10, z: -1}
+  followSpeedOrientation: 10
+  followSpeedHeight: 10
+  followSpeedDistance: 5
+  allowMoveTowardsCamera: 1
+  desiredFrontOffset: {x: 0, y: 10, z: 1}
+  frontFollowSpeedOrientation: 10
+  frontFollowSpeedHeight: 10
+  frontFollowSpeedDistance: 5
+  movingTowardsCameraAngleRange: 15
+  useWorldSpaceOffset: 0
+  useMinDistance: 1
+  minDistanceFromTarget: 1
+  useMaxDistance: 1
+  maxDistanceFromTarget: 10
+  followHeightMode: 0
+  desiredHeightAboveGround: 1
+  aboveGroundFallbackHeight: 1
+  maxGroundDistance: 10
+  maxGroundSlopeAngle: 45
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  orbit: 1
+  desiredOrbitDistance: 10
+  orbitSpeed: 10
+  orbitSpeedDistance: 10
+  orbitSensitivity: 10
+  minOrbitYAngle: -45
+  maxOrbitYAngle: 45
+  lookOffset: 0
+  interpolateTargetLookAt: 1
+  targetLookAtLerpSpeed: 10
+  avoidFollowTargetOcclusion: 1
+  occluderLayerMask:
+    serializedVersion: 2
+    m_Bits: 256
+  occlusionPullInSpeedHorizontal: 32
+  occlusionPullInSpeedVertical: 32
+  occlusionFollowSpeedIncrease: 0
+  occlusionClipPanePadding: 0
+  useTimeInOcclusionMultiplier: 1
+  maxTimeInOcclusionMultiplier: 1
+  timeInOcclusionRampUpSpeed: 1
+  timeInOcclusionRampDownSpeed: 1
+  useCamWhiskers: 1
+  whiskerPushStrength: 1
+  numWhiskers: 4
+  whiskerLength: 1
+  whiskerSectorAngle: 180
+  avoidCollisionWithGeometry: 1
+  colliderLayerMask:
+    serializedVersion: 2
+    m_Bits: 256
+  collisionMaxDistClampRelaxTime: 0
+  updateFunction: 2
