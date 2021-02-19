@@ -111,5 +111,10 @@ namespace ThirdPersonCamera
         public CameraUpdateFunction updateFunction = CameraUpdateFunction.LateUpdate;
         #endregion
 
+        public CameraParams Clone()
+        {
+            return (CameraParams) this.MemberwiseClone();
+        }
+
     }
 }

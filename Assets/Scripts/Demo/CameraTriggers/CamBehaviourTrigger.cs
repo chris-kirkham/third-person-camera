@@ -7,6 +7,10 @@ namespace ThirdPersonCamera
     /// <summary>
     /// Changes the behaviour components (Follow target, look target, parameter preset) of ThirdPersonCameras which enter the trigger this script is attached to.
     /// </summary>
+    
+    //components necessary for triggers to work
+    [RequireComponent(typeof(Collider))]
+    [RequireComponent(typeof(Rigidbody))]
     public class CamBehaviourTrigger : MonoBehaviour
     {
         [Header("On trigger enter")]
@@ -31,12 +35,12 @@ namespace ThirdPersonCamera
                 //store camera's current components
                 currFollowTarget = camComponents.followTarget;
                 currLookTarget = camComponents.lookAtTarget;
-                currCamParams = camComponents.GetCameraParams();
+                currCamParams = camComponents.cameraParams;
 
                 //assign new components
                 if (enterFollowTarget != null) camComponents.followTarget = enterFollowTarget;
                 if (enterLookTarget != null) camComponents.lookAtTarget = enterLookTarget;
-                if (enterCamParams != null) camComponents.SetCameraParams(enterCamParams);
+                if (enterCamParams != null) camComponents.cameraParams = enterCamParams;
             }
         }
 
@@ -49,13 +53,13 @@ namespace ThirdPersonCamera
                 {
                     if (currFollowTarget != null) camComponents.followTarget = currFollowTarget;
                     if (currLookTarget != null) camComponents.lookAtTarget = currLookTarget;
-                    if (currCamParams != null) camComponents.SetCameraParams(currCamParams);
+                    if (currCamParams != null) camComponents.cameraParams = currCamParams;
                 }
                 else
                 {
                     if (exitFollowTarget != null) camComponents.followTarget = exitFollowTarget;
                     if (exitLookTarget != null) camComponents.lookAtTarget = exitLookTarget;
-                    if (exitCamParams != null) camComponents.SetCameraParams(exitCamParams);
+                    if (exitCamParams != null) camComponents.cameraParams = exitCamParams;
                 }
             }
         }

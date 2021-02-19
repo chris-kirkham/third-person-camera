@@ -22,20 +22,20 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   interpolateTargetFollow: 1
-  desiredOffset: {x: 0, y: 10, z: -1}
-  followSpeedOrientation: 10
+  desiredOffset: {x: 0, y: 2, z: -15}
+  followSpeedOrientation: 100
   followSpeedHeight: 10
-  followSpeedDistance: 5
+  followSpeedDistance: 20
   allowMoveTowardsCamera: 1
-  desiredFrontOffset: {x: 0, y: 10, z: 1}
-  frontFollowSpeedOrientation: 10
+  desiredFrontOffset: {x: 0, y: 2, z: 15}
+  frontFollowSpeedOrientation: 100
   frontFollowSpeedHeight: 10
-  frontFollowSpeedDistance: 5
+  frontFollowSpeedDistance: 20
   movingTowardsCameraAngleRange: 15
   useWorldSpaceOffset: 0
   useMinDistance: 1
-  minDistanceFromTarget: 1
-  useMaxDistance: 1
+  minDistanceFromTarget: 15
+  useMaxDistance: 0
   maxDistanceFromTarget: 10
   followHeightMode: 0
   desiredHeightAboveGround: 1

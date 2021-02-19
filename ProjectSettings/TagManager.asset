@@ -15,7 +15,7 @@ TagManager:
   - 
   - LevelGeometrySolid
   - LevelGeometry_CollisionNoOcclusion
-  - 
+  - Camera
   - 
   - 
   - 

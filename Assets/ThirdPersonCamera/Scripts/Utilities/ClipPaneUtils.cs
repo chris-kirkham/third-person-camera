@@ -113,6 +113,12 @@ public static class ClipPaneUtils
         return cam.transform.position + cam.transform.forward * cam.nearClipPlane;
     }
 
+    //returns the world-space direction vector from the camera's transform.position to the centre of its near clip pane
+    public static Vector3 GetNearClipPaneDirectionWorld(this Camera cam)
+    {
+        return cam.transform.forward * cam.nearClipPlane;
+    }
+
     public static Vector3 GetNearClipPaneHalfExtents(this Camera cam, float clipPanePadding = 0f)
     {
         //clip pane y/x axes multiplied by this to pad clip pane size

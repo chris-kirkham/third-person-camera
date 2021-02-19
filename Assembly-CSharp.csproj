@@ -69,7 +69,7 @@
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\Spinner.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\GameplayCounter.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\StandardMaterialEmission\StandardMaterialEmissionBehaviour.cs" />
-    <Compile Include="Assets\ThirdPersonCamera\Scripts\Debug\DebugInfo.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\Debug\DebugDrawing.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\SwitchMaterial.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Audio\MixerSliderLink.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\TriggerUnityEvent.cs" />
@@ -93,10 +93,12 @@
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TransformTween\TransformTweenBehaviour.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Scripts\SoundTrackVolume.cs" />
     <Compile Include="Assets\ThirdPersonCamera\Scripts\SharedCameraComponents.cs" />
+    <Compile Include="Assets\Scripts\Demo\TowerFollowTarget.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Effects\CaptureDepthTexture.cs" />
     <Compile Include="Assets\Scripts\Demo\Player\BallMovement.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\NavMeshAgentControl\NavMeshAgentControlClip.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\GameCommandReceiver.cs" />
+    <Compile Include="Assets\Scripts\Demo\FollowTargetLerp.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TextSwitcher\TextSwitcherTrack.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\LightControl\LightControlTrack.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TransformTween\TransformTweenTrack.cs" />
@@ -110,8 +112,10 @@
     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraParams.cs" />
     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraEnums.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Graphics\ModulatedLight.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraMovement\OcclusionAvoidance.cs" />
     <Compile Include="Assets\Scripts\Demo\Platforms_MoveUpDown.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\InspectorHelpMessage.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraMovement\FollowTarget.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\StandardMaterialEmission\StandardMaterialEmissionTrack.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TextSwitcher\TextSwitcherClip.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\TimeDilation\TimeDilationClip.cs" />
@@ -121,6 +125,7 @@
     <Compile Include="Assets\3DGamekitLite\Scripts\Scripts\SoundTrack.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\DamageSystem\DamageZone.cs" />
     <Compile Include="Assets\ThirdPersonCamera\Scripts\Utilities\Lerps.cs" />
+    <Compile Include="Assets\Scripts\Demo\CameraTriggers\CameraTriggerObject.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Core\EllenSpawn.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\SimpleTranslator.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\LayerMaskExtensions.cs" />
@@ -150,6 +155,7 @@
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Player\StateMachineBehaviour\EllenStaffEffect.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\ParticleDeactivator.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\PlayAnimation.cs" />
+    <Compile Include="Assets\Scripts\Demo\CameraTriggers\CamBehaviourTrigger.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\LightControl\LightControlBehaviour.cs" />
     <Compile Include="Assets\3DGamekitLite\TutorialInfo\Scripts\Readme.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\DamageSystem\Damageable.cs" />
@@ -157,6 +163,7 @@
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\ScreenFader\ScreenFaderBehaviour.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\LightControl\LightControlMixerBehaviour.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\RigidbodyDelayedForce.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraMovement\OrbitTarget.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\StandardMaterialEmission\StandardMaterialEmissionMixerBehaviour.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\ObjectPooler.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Core\SceneLinkedSMB.cs" />
@@ -165,6 +172,7 @@
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Graphics\FootStepEffect.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\Interactive\Runtime\Actions\ToggleGameObjectActive.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Scripts\AmbientAudio.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraMovement\CollisionAvoidance.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Player\PlayerInput.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Effects\MirrorReflection.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Audio\AudioPlayerOnEnable.cs" />
@@ -179,9 +187,7 @@
     <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraControllerInput.cs" />
     <Compile Include="Assets\3DGamekitLite\Scripts\Game\Helpers\BatchProcessor.cs" />
     <Compile Include="Assets\3DGamekitLite\Packages\DefaultPlayables\ScreenFader\ScreenFaderMixerBehaviour.cs" />
-    <Compile Include="Assets\Scripts\Demo\CameraTriggers\CamBehaviourTrigger.cs" />
-    <Compile Include="Assets\Scripts\Demo\CameraTriggers\CameraTriggerObject.cs" />
-    <Compile Include="Assets\Scripts\Demo\TowerFollowTarget_FollowPlayerHeight.cs" />
+    <Compile Include="Assets\ThirdPersonCamera\Scripts\CameraMovement\CommonLocomotionFunctions.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

@@ -22,12 +22,12 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   interpolateTargetFollow: 1
-  desiredOffset: {x: 0, y: 0, z: -5}
-  followSpeedOrientation: 4
+  desiredOffset: {x: 0, y: 0, z: -2}
+  followSpeedOrientation: 8
   followSpeedHeight: 10
   followSpeedDistance: 20
   allowMoveTowardsCamera: 1
-  desiredFrontOffset: {x: 0, y: 0, z: 5}
+  desiredFrontOffset: {x: 0, y: 0, z: 8}
   frontFollowSpeedOrientation: 0
   frontFollowSpeedHeight: 10
   frontFollowSpeedDistance: 20
@@ -48,8 +48,8 @@ MonoBehaviour:
   orbit: 1
   desiredOrbitDistance: 4
   orbitSpeed: 100
-  orbitSpeedDistance: 50
-  orbitSensitivity: 1000
+  orbitSpeedDistance: 20
+  orbitSensitivity: 500
   minOrbitYAngle: -45
   maxOrbitYAngle: 45
   lookOffset: 0

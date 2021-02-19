@@ -28,7 +28,7 @@ namespace ThirdPersonCamera
 
         void Start()
         {
-            camParams = GetComponent<SharedCameraComponents>().GetCameraParams();
+            camParams = GetComponent<SharedCameraComponents>().cameraParams;
         }
 
         void Update()

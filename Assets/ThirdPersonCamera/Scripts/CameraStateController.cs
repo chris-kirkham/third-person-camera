@@ -110,19 +110,19 @@ namespace ThirdPersonCamera
 
         private bool CanOrbit()
         {
-            CameraBehaviourMode camMode = components.GetCameraParams().camMode;
+            CameraBehaviourMode camMode = components.cameraParams.camMode;
             return (camMode == CameraBehaviourMode.Orbit || camMode == CameraBehaviourMode.FollowAndOrbit);
         }
 
         private bool CanFollow()
         {
-            CameraBehaviourMode camMode = components.GetCameraParams().camMode;
+            CameraBehaviourMode camMode = components.cameraParams.camMode;
             return (camMode == CameraBehaviourMode.FollowAndOrbit || camMode == CameraBehaviourMode.Follow);
         }
 
         private bool TargetCanMoveTowardsCamera()
         {
-            return components.GetCameraParams().allowMoveTowardsCamera;
+            return components.cameraParams.allowMoveTowardsCamera;
         }
 
         private bool TargetIsMovingTowardsCamera()
@@ -130,12 +130,12 @@ namespace ThirdPersonCamera
             Vector3 camForwardFlat = new Vector3(cam.transform.forward.x, 0f, cam.transform.forward.z).normalized;
             Vector3 followTargetForward = components.followTarget.transform.forward;
             Vector3 targetForwardFlat = new Vector3(followTargetForward.x, 0f, followTargetForward.z).normalized;
-            return Mathf.Abs(Vector3.SignedAngle(camForwardFlat, targetForwardFlat, Vector3.up)) > (180 - components.GetCameraParams().movingTowardsCameraAngleRange);
+            return Mathf.Abs(Vector3.SignedAngle(camForwardFlat, targetForwardFlat, Vector3.up)) > (180 - components.cameraParams.movingTowardsCameraAngleRange);
         }
 
         private bool IsCamOrientationNearEnoughDesiredFollow()
         {
-            CameraParams camParams = components.GetCameraParams();
+            CameraParams camParams = components.cameraParams;
             
             //get front or rear offset
             Vector3 desiredOffset = TargetIsMovingTowardsCamera() && TargetCanMoveTowardsCamera() ? camParams.desiredFrontOffset : camParams.desiredOffset;
@@ -151,7 +151,7 @@ namespace ThirdPersonCamera
         {
             if (state != CameraState.OrbitToFollow_HoldingOrbitAngle) //reset counter
             {
-                orbitToFollowDelayCounter = components.GetCameraParams().orbitToFollowHoldTime;
+                orbitToFollowDelayCounter = components.cameraParams.orbitToFollowHoldTime;
             }
             else //decrement counter
             {
