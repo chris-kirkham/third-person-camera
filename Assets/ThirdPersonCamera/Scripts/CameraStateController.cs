@@ -101,8 +101,6 @@ namespace ThirdPersonCamera
             }
         }
 
-
-
         private bool IsOrbiting()
         {
             return input.OrbitAngleChanged && CanOrbit();

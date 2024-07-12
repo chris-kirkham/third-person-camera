@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ThirdPersonFollowAndOrbit
   m_EditorClassIdentifier: 
   camMode: 2
-  orbitToFollowHoldTime: 2
+  orbitToFollowHoldTime: 1
   orbitToFollowTransitionSpeed: 10
   transitionSpeedRamp:
     serializedVersion: 2
@@ -23,20 +23,20 @@ MonoBehaviour:
     m_RotationOrder: 4
   interpolateTargetFollow: 1
   desiredOffset: {x: 0, y: 0, z: -2}
-  followSpeedOrientation: 8
-  followSpeedHeight: 10
-  followSpeedDistance: 20
+  followSpeedOrientation: 1
+  followSpeedHeight: 25
+  followSpeedDistance: 10
   allowMoveTowardsCamera: 1
-  desiredFrontOffset: {x: 0, y: 0, z: 8}
+  desiredFrontOffset: {x: 0, y: 0, z: 3}
   frontFollowSpeedOrientation: 0
-  frontFollowSpeedHeight: 10
-  frontFollowSpeedDistance: 20
+  frontFollowSpeedHeight: 25
+  frontFollowSpeedDistance: 25
   movingTowardsCameraAngleRange: 30
   useWorldSpaceOffset: 0
   useMinDistance: 0
   minDistanceFromTarget: 4
   useMaxDistance: 0
-  maxDistanceFromTarget: 10
+  maxDistanceFromTarget: 5
   followHeightMode: 0
   desiredHeightAboveGround: 1.5
   aboveGroundFallbackHeight: 0
@@ -77,4 +77,4 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 768
   collisionMaxDistClampRelaxTime: 0
-  updateFunction: 2
+  updateFunction: 1

@@ -9,6 +9,9 @@ public static class Lerps
     //Smoothstep and Smootherstep from https://chicounity3d.wordpress.com/2014/05/23/how-to-lerp-like-a-pro/
     public static float Smoothstep(float a, float b, float t)
     {
+        //SANITY CHECK - use regular lerps
+        return Mathf.Lerp(a, b, t);
+
         t = Mathf.Clamp01(t);
         t = t * t * (3f - 2f * t);
         return a + ((b - a) * t);
@@ -16,6 +19,9 @@ public static class Lerps
     
     public static float Smootherstep(float a, float b, float t)
     {
+        //SANITY CHECK - use regular lerps
+        return Mathf.Lerp(a, b, t);
+
         t = Mathf.Clamp01(t);
         t = t * t * t * (t * (6f * t - 15f) + 10f);
         return a + ((b - a) * t);
@@ -39,6 +45,9 @@ public static class Lerps
     /* VECTOR3 */
     public static Vector3 Smoothstep(Vector3 a, Vector3 b, float t)
     {
+        //SANITY CHECK - use regular lerps
+        return Vector3.Lerp(a, b, t);
+
         t = Mathf.Clamp01(t);
         t = t * t * (3f - 2f * t);
         return a + ((b - a) * t);
@@ -46,6 +55,9 @@ public static class Lerps
 
     public static Vector3 Smootherstep(Vector3 a, Vector3 b, float t)
     {
+        //SANITY CHECK - use regular lerps
+        return Vector3.Lerp(a, b, t);
+
         t = Mathf.Clamp01(t);
         t = t * t * t * (t * (6f * t - 15f) + 10f);
         return a + ((b - a) * t);

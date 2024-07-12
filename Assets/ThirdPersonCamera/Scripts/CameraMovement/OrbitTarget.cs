@@ -60,7 +60,7 @@ namespace ThirdPersonCamera
 
             //interpolate distance from target separately 
             Vector3 newOffset = newCamPos - followTarget.transform.position; //convert new cam position back to a world space offset from follow target
-            float newDistance = Lerps.Smootherstep((cam.transform.position - followTarget.transform.position).magnitude, camParams.desiredOrbitDistance, camParams.orbitSpeedDistance * deltaTime); //interpolate between current offset distance and desired distance
+            float newDistance = Lerps.Smoothstep((cam.transform.position - followTarget.transform.position).magnitude, camParams.desiredOrbitDistance, camParams.orbitSpeedDistance * deltaTime); //interpolate between current offset distance and desired distance
             return followTarget.transform.position + newOffset.normalized * newDistance; //scale normalised offset by new distance and convert back to world position
         }
 

@@ -1,6 +1,6 @@
 ﻿//debug preprocessor define
 #if UNITY_EDITOR //true if running in the editor
-    #define TPC_CAMERA_MOVEMENT_DEBUG //hopefully this is specific enough that nobody else has defined it in anything
+    #define TPC_CAMERA_MOVEMENT_DEBUG
 #elif DEVELOPMENT_BUILD //true if "development build" flag is checked in build options
     #define TPC_CAMERA_MOVEMENT_DEBUG
 #endif

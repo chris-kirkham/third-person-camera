@@ -34,6 +34,21 @@ namespace ThirdPersonCamera
         void Update()
         {
             UpdateOrbitInput(Time.deltaTime);
+        
+            if(Input.GetKeyDown(KeyCode.Minus))
+            {
+                Time.timeScale *= 0.5f;
+            }
+
+            if(Input.GetKeyDown(KeyCode.Equals))
+            {
+                Time.timeScale *= 2f;
+            }
+
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                Time.timeScale = 1f;
+            }
         }
 
         private void UpdateOrbitInput(float deltaTime)

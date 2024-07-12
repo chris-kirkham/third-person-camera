@@ -96,23 +96,43 @@ namespace ThirdPersonCamera
             /* Move camera */
             Vector3 initialClipPanePos = cam.GetNearClipPaneCentreWorld(); //cache camera's near clip pane centre before any movement for collision avoidance
             cam.transform.position = GetCameraMoveResult(stateController.GetCameraState(), deltaTime);
-            if (camParams.useCamWhiskers) cam.transform.position = GetCamWhiskerResult(cam.transform.position, GetCamWhiskerOffset(), deltaTime);
-            if (camParams.avoidFollowTargetOcclusion) cam.transform.position = GetOcclusionPullInResult(deltaTime);
-            cam.transform.rotation = LookAtTarget(deltaTime);
-            if (camParams.useMinDistance) cam.transform.position = ClampCameraMinDistance(camParams.minDistanceFromTarget);
+            if (camParams.useCamWhiskers)
+            {
+                cam.transform.position = GetCamWhiskerResult(cam.transform.position, GetCamWhiskerOffset(), deltaTime);
+            }
+            
+            if (camParams.avoidFollowTargetOcclusion)
+            {
+                cam.transform.position = GetOcclusionPullInResult(deltaTime);
+            }
+            
+            if (camParams.useMinDistance)
+            {
+                cam.transform.position = ClampCameraMinDistance(camParams.minDistanceFromTarget);
+            }
 
             //max distance clamp is dependant on whether the camera collided with geometry this tick
             Vector3 collisionAvoidPos = Vector3.zero;
             float maxDist = camParams.maxDistanceFromTarget;
-            if (camParams.avoidCollisionWithGeometry) collisionAvoidPos = AvoidCollisions(initialClipPanePos, cam);
+            if (camParams.avoidCollisionWithGeometry)
+            {
+                collisionAvoidPos = AvoidCollisions(initialClipPanePos, cam);
+            }
+            
             if(collisionAvoidPos != cam.transform.position)
             {
                 cam.transform.position = collisionAvoidPos;
             }
             
-            if (camParams.useMaxDistance) cam.transform.position = ClampCameraMaxDistance(maxDist);
+            if (camParams.useMaxDistance)
+            {
+                cam.transform.position = ClampCameraMaxDistance(maxDist);
+            }
+
+            cam.transform.rotation = LookAtTarget(deltaTime);
 
             //TEST
+#if TPC_CAMERA_MOVEMENT_DEBUG
             Vector3 occlusionAvoidPos = GetOcclusionPullForwardPosition(cam, followTarget.transform.position, 1f);
             Debug.DrawLine(cam.transform.position, occlusionAvoidPos, Color.yellow);
             Debug.DrawRay(occlusionAvoidPos, Vector3.up * cam.nearClipPlane, Color.yellow);
@@ -122,7 +142,6 @@ namespace ThirdPersonCamera
             Debug.DrawRay(occlusionAvoidPos, Vector3.forward * cam.nearClipPlane, Color.yellow);
             Debug.DrawRay(occlusionAvoidPos, Vector3.back * cam.nearClipPlane, Color.yellow);
 
-#if TPC_CAMERA_MOVEMENT_DEBUG
             debugInfo.followTargetPos = followTarget.transform.position;
             debugInfo.camNearClipPanePos = cam.GetNearClipPaneCentreWorld();
             debugInfo.camVirtualSize = virtualCameraSphereRadius;
@@ -222,12 +241,12 @@ namespace ThirdPersonCamera
 
         private Vector3 MoveCameraInterpolated(Vector3 desiredPos, float moveSpeed, float deltaTime)
         {
-            return Smootherstep(cam.transform.position, desiredPos, moveSpeed * deltaTime);
+            return Smoothstep(cam.transform.position, desiredPos, moveSpeed * deltaTime);
         }
 
         private Vector3 MoveCameraInterpolated(Vector3 desiredPos, float horizontalMoveSpeed, float verticalMoveSpeed, float deltaTime)
         {
-            return Smootherstep(cam.transform.position, desiredPos, horizontalMoveSpeed * deltaTime, verticalMoveSpeed * deltaTime);
+            return Smoothstep(cam.transform.position, desiredPos, horizontalMoveSpeed * deltaTime, verticalMoveSpeed * deltaTime);
         }
 
         private void UpdateTrackers(float deltaTime)
@@ -279,13 +298,14 @@ namespace ThirdPersonCamera
                 followSpeedHorz += occlusionSpeedIncrease;
                 followSpeedVert += occlusionSpeedIncrease;
             }
+
             //interpolate between current and desired positions
             Vector3 newCamPos = MoveCameraInterpolated(desiredPos, followSpeedHorz, followSpeedVert, deltaTime);
 
             //interpolate distance from target separately 
             float desiredDistance = desiredOffset.magnitude;
             Vector3 newOffset = newCamPos - followTarget.transform.position; //convert new cam position back to a world space offset from follow target
-            float newDistance = Smootherstep(newOffset.magnitude, desiredDistance, followSpeedDistance * deltaTime); //interpolate between current offset distance and desired distance
+            float newDistance = Smoothstep(newOffset.magnitude, desiredDistance, followSpeedDistance * deltaTime); //interpolate between current offset distance and desired distance
             return followTarget.transform.position + (newOffset.normalized * newDistance); //scale normalised offset by new distance and convert back to world position
         }
 
@@ -644,7 +664,8 @@ namespace ThirdPersonCamera
             
             //interpolate distance from target separately 
             Vector3 newOffset = newCamPos - followTarget.transform.position; //convert new cam position back to a world space offset from follow target
-            float newDistance = Smootherstep((cam.transform.position - followTarget.transform.position).magnitude, camParams.desiredOrbitDistance, camParams.orbitSpeedDistance * deltaTime); //interpolate between current offset distance and desired distance
+            float newDistance = Smoothstep((cam.transform.position - followTarget.transform.position).magnitude, //interpolate between current offset distance and desired distance
+                camParams.desiredOrbitDistance, camParams.orbitSpeedDistance * deltaTime); 
             return followTarget.transform.position + (newOffset.normalized * newDistance); //scale normalised offset by new distance and convert back to world position
         }
 
@@ -709,7 +730,10 @@ namespace ThirdPersonCamera
         /// <summary> caches the current orbit angle for orbit-to-follow transition hold</summary>
         private void UpdateOrbitHoldAngles(CameraState state)
         {
-            if(state != CameraState.OrbitToFollow_HoldingOrbitAngle) orbitHoldAngle = currentOrbitAngles;
+            if (state != CameraState.OrbitToFollow_HoldingOrbitAngle)
+            {
+                orbitHoldAngle = currentOrbitAngles;
+            }
         }
         #endregion
 
@@ -720,8 +744,9 @@ namespace ThirdPersonCamera
         /// <returns>The desired look-at-target rotation</returns>
         private Quaternion GetDesiredLookAtTargetRotation()
         {
-            Transform lookAtTransform = lookAtTarget.transform;
-            return Quaternion.LookRotation((lookAtTransform.position + new Vector3(lookAtTransform.right.x, 0f, lookAtTransform.right.z).normalized * camParams.lookOffset) - cam.transform.position);
+            var lookAtTransform = lookAtTarget.transform;
+            var look = new Vector3(lookAtTransform.right.x, 0f, lookAtTransform.right.z).normalized * camParams.lookOffset;
+            return Quaternion.LookRotation((lookAtTransform.position + look) - cam.transform.position, Vector3.up);
         }
 
         /// <summary>
@@ -731,9 +756,10 @@ namespace ThirdPersonCamera
         /// <returns>The camera's new look-at-target rotation. If this is not interpolated, it will be the same as the desired look-at rotation</returns>
         private Quaternion LookAtTarget(float deltaTime)
         {
-            if (camParams.interpolateTargetLookAt)
+            //N.B. don't interpolate lookat if in orbit mode 
+            if (stateController.GetCameraState() != CameraState.OrbitingTarget && camParams.interpolateTargetLookAt)
             {
-                return Quaternion.Lerp(cam.transform.rotation, GetDesiredLookAtTargetRotation(), deltaTime * camParams.targetLookAtLerpSpeed);
+                return Quaternion.Slerp(cam.transform.rotation, GetDesiredLookAtTargetRotation(), deltaTime * camParams.targetLookAtLerpSpeed);
             }
             else
             {
